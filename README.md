@@ -38,18 +38,15 @@ everything inlined.
 | `sequencer.js` | lookahead-scheduler transport |
 | `app.js` | grid build, control wiring, visual playhead |
 | `thudworks-standalone.html` | single-file build (everything inlined) |
-| `gen-808-kit.py` | synthesizes the 808 one-shot kit (pure stdlib) |
-| `gen-synth-melodic.py` | synthesizes the melodic synth kit |
-| `fetch-acoustic-kit-01.sh` / `fetch-melodic-kit.sh` | build the CC0 sampled kits from VCSL |
-| `starter-pack.md` | CC0 sourcing manifest + provenance for the optional sampled kits |
+| `gen-808-kit.py` | offline synth render of the 808 one-shot kit (pure stdlib) |
+| `gen-synth-melodic.py` | offline synth render of the melodic kit |
 | `name-decision.md` | naming/branding record |
 | `sessions/` | development session notes |
-| `assets/` | sampled kits (**gitignored** — regenerate via the scripts above) |
 
 ## Sounds: synthesized, not sampled
 
-The app generates all audio at runtime, so it ships with no samples and nothing to
-license. The optional CC0 sampled kits (acoustic / melodic from VCSL, plus synthesized
-808 and synth-melodic kits) live under `assets/`, which is gitignored — they're large
-binaries that any of the bundled scripts can regenerate. `starter-pack.md` holds the
-full provenance and licensing record.
+Every sound is generated at runtime in `synth.js` with the Web Audio API — the app
+ships with **no audio files**, nothing to host, and nothing to license. That's the whole
+point: clean licensing, instant load, and it fits the workshop vibe. The `gen-*.py`
+scripts are the same synthesis offline (handy for rendering one-shots), but the app needs
+nothing from them to run.
