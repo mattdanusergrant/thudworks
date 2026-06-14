@@ -7,15 +7,16 @@ Web Audio API** — there are no audio files to host or license. The app *is* th
 
 ## Run it
 
+**Live:** https://mattdanusergrant.github.io/thudworks/
+
 No build step, no dependencies. It uses ES modules, so serve over http (not `file://`):
 
 ```bash
-cd app
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-Or just open `app/thudworks-standalone.html` directly — it's a single-file build with
+Or just open `thudworks-standalone.html` directly — it's a single-file build with
 everything inlined.
 
 ## Features
@@ -28,13 +29,15 @@ everything inlined.
 - **Clear / Random**, per-track **mute** (click a track name)
 - Mobile-friendly layout
 
-See [`app/README.md`](app/README.md) for the architecture breakdown.
-
 ## Repo layout
 
 | Path | What |
 |---|---|
-| `app/` | the web app (vanilla ES modules, no build) |
+| `index.html` / `style.css` | markup + dark/neon theme |
+| `synth.js` | Web Audio voices (ported from `gen-808-kit.py`) |
+| `sequencer.js` | lookahead-scheduler transport |
+| `app.js` | grid build, control wiring, visual playhead |
+| `thudworks-standalone.html` | single-file build (everything inlined) |
 | `gen-808-kit.py` | synthesizes the 808 one-shot kit (pure stdlib) |
 | `gen-synth-melodic.py` | synthesizes the melodic synth kit |
 | `fetch-acoustic-kit-01.sh` / `fetch-melodic-kit.sh` | build the CC0 sampled kits from VCSL |
