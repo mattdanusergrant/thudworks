@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THUDWORKS — make dope grooves</title>
+  <style>
+:root {
+  --bg: #0c0d12; --panel: #15171f; --panel2: #1d2030; --ink: #e8eaf2; --dim: #8b8fa6;
+  --line: #2a2e40; --accent: #ff8a3d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: radial-gradient(120% 120% at 50% 0%, #16182300 40%, #000 100%), var(--bg);
+  color: var(--ink); font: 15px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  padding: 18px clamp(10px, 3vw, 36px) 60px;
+}
+header { text-align: center; margin-bottom: 14px; }
+h1 {
+  margin: 0; font-size: clamp(28px, 6vw, 46px); letter-spacing: 6px; font-weight: 800;
+  background: linear-gradient(90deg, #ff4d4d, #ff8a3d, #ffd23d, #3dffd2, #3dc5ff, #9d8aff);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.tag { margin: 2px 0 0; color: var(--dim); letter-spacing: 2px; font-style: italic; }
+
+.transport, .presets {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 16px; margin: 0 auto 12px; max-width: 980px;
+}
+.transport label { display: flex; align-items: center; gap: 7px; color: var(--dim); font-size: 13px; }
+input[type=range] { accent-color: var(--accent); width: 96px; vertical-align: middle; }
+select { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; }
+.transport span { color: var(--ink); min-width: 14px; display: inline-block; text-align: right; }
+
+button { cursor: pointer; font: inherit; border: none; border-radius: 9px; transition: .12s; }
+.play {
+  background: linear-gradient(180deg, #2ecb6e, #1f9e54); color: #04210f; font-weight: 800;
+  padding: 9px 20px; font-size: 15px;
+}
+.play.on { background: linear-gradient(180deg, #ff5c5c, #d23b3b); color: #2a0606; }
+.ghost { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; }
+.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.plabel { color: var(--dim); font-size: 13px; }
+.preset { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; }
+.preset:hover { background: var(--accent); color: #1a0c00; }
+
+.grid { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 7px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.name {
+  flex: 0 0 92px; text-align: left; background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-left: 4px solid var(--c); padding: 9px 10px;
+  border-radius: 9px; font-size: 13px; font-weight: 600;
+}
+.name.muted { opacity: .4; text-decoration: line-through; }
+.steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; flex: 1; }
+.cell {
+  aspect-ratio: 1; min-width: 0; border-radius: 7px; border: 1px solid var(--line);
+  background: var(--panel2);
+}
+.cell.beatB { background: #23273a; }
+.cell:hover { border-color: var(--c); }
+.cell.on { background: var(--c); border-color: var(--c); box-shadow: 0 0 10px -1px var(--c); }
+.cell.playing { outline: 2px solid #fff; outline-offset: -2px; }
+.cell.on.playing { box-shadow: 0 0 16px 1px var(--c); }
+
+footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22px; }
+
+@media (max-width: 620px) {
+  .name { flex-basis: 64px; font-size: 11px; }
+  .steps { gap: 3px; }
+  h1 { letter-spacing: 3px; }
+}
+
+</style>
+</head>
+<body>
+  <header>
+    <h1>THUDWORKS</h1>
+    <p class="tag">make dope grooves.</p>
+  </header>
+
+  <section class="transport">
+    <button id="play" class="play">▶ Play</button>
+    <label>BPM <input id="bpm" type="range" min="60" max="180" value="88" /><span id="bpmVal">88</span></label>
+    <label>Swing <input id="swing" type="range" min="0" max="60" value="0" /><span id="swingVal">0</span>%</label>
+    <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
+    <label>Bass <select id="bassNote"></select></label>
+    <button id="clear" class="ghost">Clear</button>
+    <button id="random" class="ghost">Random</button>
+  </section>
+
+  <section id="presets" class="presets"><span class="plabel">Presets:</span></section>
+
+  <main id="grid" class="grid"></main>
+
+  <footer>
+    <span>Every sound is synthesized live in your browser — no samples, no licensing. Tap a cell to program a step, hit Play.</span>
+  </footer>
+
+  <script>
+// THUDWORKS — synth voices (Web Audio). Every drum is generated live: sine + noise
+// + envelopes, the same way the real TR-808 works. No samples, no licensing.
+// Each voice is trigger(time, gain, opts) and schedules itself on the audio clock.
+
+function createKit(ctx, out) {
+  // shared 1s white-noise buffer (reused by every noise-based voice)
+  const noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const noise = () => { const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s; };
+
+  // soft-saturation curve so sub-bass has audible harmonics on small speakers
+  const sat = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; sat[i] = Math.tanh(2.2 * x); }
+
+  const decayGain = (t, peak, dur) => {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(Math.max(peak, 0.0001), t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    return g;
+  };
+
+  function kick(t, gain = 1) {
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(120, t);
+    o.frequency.exponentialRampToValueAtTime(46, t + 0.08);
+    const g = decayGain(t, gain, 0.5);
+    o.connect(g).connect(out); o.start(t); o.stop(t + 0.55);
+    // transient click
+    const n = noise(), ng = decayGain(t, gain * 0.6, 0.012);
+    n.connect(ng).connect(out); n.start(t); n.stop(t + 0.02);
+  }
+
+  function bass(t, gain = 1, freq = 55) {
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(freq * 2, t);
+    o.frequency.exponentialRampToValueAtTime(freq, t + 0.04);
+    const ws = ctx.createWaveShaper(); ws.curve = sat;
+    const g = decayGain(t, gain * 0.9, 0.6);
+    o.connect(ws).connect(g).connect(out); o.start(t); o.stop(t + 0.65);
+  }
+
+  function snare(t, gain = 1) {
+    const n = noise(), f = ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 1500;
+    const ng = decayGain(t, gain * 0.8, 0.18);
+    n.connect(f).connect(ng).connect(out); n.start(t); n.stop(t + 0.2);
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 180;
+    const og = decayGain(t, gain * 0.5, 0.1);
+    o.connect(og).connect(out); o.start(t); o.stop(t + 0.12);
+  }
+
+  const hat = (t, gain, dur) => {
+    const n = noise(), f = ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 7000;
+    const g = decayGain(t, gain * 0.5, dur);
+    n.connect(f).connect(g).connect(out); n.start(t); n.stop(t + dur + 0.02);
+  };
+  const hatClosed = (t, gain = 1) => hat(t, gain, 0.045);
+  const hatOpen = (t, gain = 1) => hat(t, gain, 0.35);
+
+  function clap(t, gain = 1) {
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200; f.Q.value = 1.4;
+    const g = ctx.createGain(); f.connect(g).connect(out);
+    const n = noise(); n.connect(f); n.start(t); n.stop(t + 0.25);
+    g.gain.setValueAtTime(0.0001, t);
+    [0, 0.009, 0.018].forEach(o => {
+      g.gain.setValueAtTime(gain * 0.9, t + o);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + o + 0.011);
+    });
+    g.gain.setValueAtTime(gain * 0.7, t + 0.027);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  }
+
+  function cowbell(t, gain = 1) {
+    const mk = f => { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; return o; };
+    const o1 = mk(540), o2 = mk(800);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2640; bp.Q.value = 1;
+    const g = decayGain(t, gain * 0.4, 0.3);
+    o1.connect(bp); o2.connect(bp); bp.connect(g).connect(out);
+    o1.start(t); o2.start(t); o1.stop(t + 0.32); o2.stop(t + 0.32);
+  }
+
+  function clave(t, gain = 1) {
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 1180;
+    const g = decayGain(t, gain * 0.8, 0.05);
+    o.connect(g).connect(out); o.start(t); o.stop(t + 0.06);
+  }
+
+  function tom(t, gain = 1, freq = 150) {
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(freq * 1.5, t);
+    o.frequency.exponentialRampToValueAtTime(freq, t + 0.04);
+    const g = decayGain(t, gain, 0.22);
+    o.connect(g).connect(out); o.start(t); o.stop(t + 0.24);
+  }
+
+  return { kick, bass, snare, hatClosed, hatOpen, clap, cowbell, clave, tom };
+}
+
+// note name -> frequency (equal temperament, A4 = 440)
+const SEMI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+function noteFreq(name, octave) {
+  return 440 * Math.pow(2, (SEMI[name] + (octave - 4) * 12 - 9) / 12);
+}
+// THUDWORKS — step sequencer transport. Uses the lookahead-scheduler pattern:
+// a setInterval wakes often and schedules upcoming steps slightly ahead on the
+// audio clock, so timing stays sample-tight regardless of UI jank.
+
+class Sequencer {
+  constructor(ctx, onTrigger) {
+    this.ctx = ctx;
+    this.onTrigger = onTrigger;     // (stepIndex, time) => play that column's voices
+    this.bpm = 90;
+    this.swing = 0;                 // 0..70 (%) — delays every other 16th
+    this.steps = 16;
+    this.current = 0;
+    this.nextTime = 0;
+    this.playing = false;
+    this.lookaheadMs = 25;
+    this.scheduleAhead = 0.12;      // seconds
+    this.timer = null;
+    this.queue = [];                // {step, time} for the visual playhead
+  }
+
+  get sixteenth() { return (60 / this.bpm) / 4; }
+
+  start() {
+    if (this.playing) return;
+    this.playing = true;
+    this.current = 0;
+    this.nextTime = this.ctx.currentTime + 0.06;
+    this.timer = setInterval(() => this._schedule(), this.lookaheadMs);
+  }
+
+  stop() {
+    this.playing = false;
+    clearInterval(this.timer);
+    this.queue.length = 0;
+  }
+
+  _schedule() {
+    while (this.nextTime < this.ctx.currentTime + this.scheduleAhead) {
+      // swing: push odd (off-beat) 16ths later
+      const swingSec = this.sixteenth * (this.swing / 100);
+      const playTime = this.nextTime + (this.current % 2 ? swingSec : 0);
+      this.onTrigger(this.current, playTime);
+      this.queue.push({ step: this.current, time: playTime });
+      this.nextTime += this.sixteenth;
+      this.current = (this.current + 1) % this.steps;
+    }
+  }
+}
+// THUDWORKS — app glue: builds the grid, wires transport + controls, draws the playhead.
+
+const STEPS = 16;
+
+// tracks (top -> bottom). `voice` names a function on the kit; `pitched` rows follow the bass note.
+const TRACKS = [
+  { key: 'kick',    label: 'Kick',     voice: 'kick',      color: '#ff4d4d' },
+  { key: 'bass',    label: '808 Bass', voice: 'bass',      color: '#ff8a3d', pitched: true },
+  { key: 'snare',   label: 'Snare',    voice: 'snare',     color: '#ffd23d' },
+  { key: 'clap',    label: 'Clap',     voice: 'clap',      color: '#a3ff3d' },
+  { key: 'hatC',    label: 'Hat',      voice: 'hatClosed', color: '#3dffd2' },
+  { key: 'hatO',    label: 'Open Hat', voice: 'hatOpen',   color: '#3dc5ff' },
+  { key: 'cowbell', label: 'Cowbell',  voice: 'cowbell',   color: '#9d8aff' },
+  { key: 'clave',   label: 'Clave',    voice: 'clave',     color: '#ff6ad5' },
+  { key: 'tom',     label: 'Tom',      voice: 'tom',       color: '#ff9db1' },
+];
+
+// preset patterns. Each string is 16 chars; 'x' = hit. Empty/missing = silent row.
+const P = s => Array.from({ length: STEPS }, (_, i) => s[i] === 'x');
+const PRESETS = {
+  'Boom Bap': { bpm: 88, p: {
+    kick:  'x.......x...x...', snare: '....x.......x...',
+    hatC:  'x.x.x.x.x.x.x.x.', bass:  'x.......x.......' } },
+  'Trap': { bpm: 140, p: {
+    kick:  'x.....x...x.....', snare: '........x.......', clap: '........x.......',
+    hatC:  'xxxxxxxxxxxxxxxx', hatO: '..........x.....', bass: 'x.....x...x.....' } },
+  'House': { bpm: 124, p: {
+    kick:  'x...x...x...x...', clap: '....x.......x...',
+    hatO:  '..x...x...x...x.', hatC: 'x.x.x.x.x.x.x.x.', bass: 'x...x...x...x...' } },
+  'Funk': { bpm: 102, p: {
+    kick:  'x..x...x..x.....', snare: '....x.......x...',
+    hatC:  'xxxxxxxxxxxxxxxx', cowbell: '....x...x...x...', bass: 'x..x...x..x.....' } },
+};
+
+// ---- state ----
+let ctx, kit, master, seq;
+const pattern = {};            // key -> [bool x16]
+const muted = {};              // key -> bool
+TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
+let bassNote = { name: 'C', octave: 2 };
+
+// ---- audio bootstrap (must happen on a user gesture) ----
+function ensureAudio() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor();       // glue + soft limit so stacks don't clip
+  master.connect(comp).connect(ctx.destination);
+  kit = createKit(ctx, master);
+  seq = new Sequencer(ctx, triggerColumn);
+  seq.bpm = +bpmEl.value;
+  seq.swing = +swingEl.value;
+  requestAnimationFrame(drawPlayhead);
+}
+
+function triggerColumn(step, time) {
+  for (const t of TRACKS) {
+    if (muted[t.key] || !pattern[t.key][step]) continue;
+    const fn = kit[t.voice];
+    if (t.pitched) fn(time, 1, noteFreq(bassNote.name, bassNote.octave));
+    else fn(time, 1);
+  }
+}
+
+// ---- DOM ----
+const grid = document.getElementById('grid');
+const bpmEl = document.getElementById('bpm');
+const bpmVal = document.getElementById('bpmVal');
+const swingEl = document.getElementById('swing');
+const swingVal = document.getElementById('swingVal');
+const volEl = document.getElementById('vol');
+const playBtn = document.getElementById('play');
+const cells = {};              // key -> [button x16]
+
+function buildGrid() {
+  for (const t of TRACKS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const name = document.createElement('button');
+    name.className = 'name'; name.textContent = t.label;
+    name.style.setProperty('--c', t.color);
+    name.onclick = () => { muted[t.key] = !muted[t.key]; name.classList.toggle('muted', muted[t.key]); };
+    row.appendChild(name);
+
+    const steps = document.createElement('div'); steps.className = 'steps';
+    cells[t.key] = [];
+    for (let i = 0; i < STEPS; i++) {
+      const c = document.createElement('button');
+      c.className = 'cell' + (Math.floor(i / 4) % 2 ? ' beatB' : ' beatA');
+      c.style.setProperty('--c', t.color);
+      c.onclick = () => {
+        ensureAudio();
+        pattern[t.key][i] = !pattern[t.key][i];
+        c.classList.toggle('on', pattern[t.key][i]);
+        if (pattern[t.key][i]) {                       // audition the hit
+          const fn = kit[t.voice];
+          t.pitched ? fn(ctx.currentTime, 1, noteFreq(bassNote.name, bassNote.octave)) : fn(ctx.currentTime, 1);
+        }
+      };
+      cells[t.key].push(c); steps.appendChild(c);
+    }
+    row.appendChild(steps); grid.appendChild(row);
+  }
+}
+
+function syncGrid() {
+  for (const t of TRACKS)
+    cells[t.key].forEach((c, i) => c.classList.toggle('on', pattern[t.key][i]));
+}
+
+// ---- visual playhead ----
+let lastCol = -1;
+function drawPlayhead() {
+  if (seq && seq.playing) {
+    while (seq.queue.length && seq.queue[0].time < ctx.currentTime) {
+      const col = seq.queue.shift().step;
+      if (col !== lastCol) { highlight(col); lastCol = col; }
+    }
+  }
+  requestAnimationFrame(drawPlayhead);
+}
+function highlight(col) {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  for (const t of TRACKS) cells[t.key][col]?.classList.add('playing');
+}
+function clearHighlight() {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  lastCol = -1;
+}
+
+// ---- controls ----
+playBtn.onclick = () => {
+  ensureAudio();
+  if (ctx.state === 'suspended') ctx.resume();
+  if (seq.playing) { seq.stop(); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); clearHighlight(); }
+  else { seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
+};
+bpmEl.oninput = () => { bpmVal.textContent = bpmEl.value; if (seq) seq.bpm = +bpmEl.value; };
+swingEl.oninput = () => { swingVal.textContent = swingEl.value; if (seq) seq.swing = +swingEl.value; };
+volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
+
+document.getElementById('clear').onclick = () => {
+  TRACKS.forEach(t => pattern[t.key].fill(false)); syncGrid();
+};
+document.getElementById('random').onclick = () => {
+  const density = { kick: .25, snare: .12, clap: .08, hatC: .55, hatO: .12,
+                    cowbell: .1, clave: .1, tom: .08, bass: .22 };
+  TRACKS.forEach(t => pattern[t.key] = Array.from({ length: STEPS }, () => Math.random() < (density[t.key] || .2)));
+  syncGrid();
+};
+
+// preset buttons
+const presetBar = document.getElementById('presets');
+Object.keys(PRESETS).forEach(name => {
+  const b = document.createElement('button'); b.textContent = name; b.className = 'preset';
+  b.onclick = () => {
+    const { bpm, p } = PRESETS[name];
+    TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+    bpmEl.value = bpm; bpmVal.textContent = bpm; if (seq) seq.bpm = bpm;
+    syncGrid();
+  };
+  presetBar.appendChild(b);
+});
+
+// bass note picker
+const noteSel = document.getElementById('bassNote');
+['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].forEach(n =>
+  [1, 2, 3].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = `${n}${o}`; opt.textContent = `${n}${o}`;
+    if (n === 'C' && o === 2) opt.selected = true;
+    noteSel.appendChild(opt);
+  }));
+noteSel.onchange = () => {
+  const m = noteSel.value.match(/^([A-G]#?)(\d)$/);
+  bassNote = { name: m[1], octave: +m[2] };
+};
+
+buildGrid();
+PRESETS['Boom Bap'] && (() => {     // start with a beat already on the grid
+  const { p, bpm } = PRESETS['Boom Bap'];
+  TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+  bpmEl.value = bpm; bpmVal.textContent = bpm; syncGrid();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Sampled audio kits — large binaries, regenerable from the scripts/manifests in this repo.
+# Provenance lives in starter-pack.md; regenerate with gen-808-kit.py / gen-synth-melodic.py
+# / fetch-*.sh. The app itself synthesizes all sound live and needs none of these.
+assets/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THUDWORKS — make dope grooves</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>THUDWORKS</h1>
+    <p class="tag">make dope grooves.</p>
+  </header>
+
+  <section class="transport">
+    <button id="play" class="play">▶ Play</button>
+    <label>BPM <input id="bpm" type="range" min="60" max="180" value="88" /><span id="bpmVal">88</span></label>
+    <label>Swing <input id="swing" type="range" min="0" max="60" value="0" /><span id="swingVal">0</span>%</label>
+    <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
+    <label>Bass <select id="bassNote"></select></label>
+    <button id="clear" class="ghost">Clear</button>
+    <button id="random" class="ghost">Random</button>
+  </section>
+
+  <section id="presets" class="presets"><span class="plabel">Presets:</span></section>
+
+  <main id="grid" class="grid"></main>
+
+  <footer>
+    <span>Every sound is synthesized live in your browser — no samples, no licensing. Tap a cell to program a step, hit Play.</span>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
