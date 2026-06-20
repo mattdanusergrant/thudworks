@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>THUDWORKS — code your songs</title>
+  <title>THUDWORKS — make dope grooves</title>
   <style>
 :root {
   --bg: #0c0d12; --panel: #15171f; --panel2: #1d2030; --ink: #e8eaf2; --dim: #8b8fa6;
   --line: #2a2e40; --accent: #ff8a3d;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 body {
@@ -24,15 +23,15 @@ h1 {
 }
 .tag { margin: 2px 0 0; color: var(--dim); letter-spacing: 2px; font-style: italic; }
 
-.transport, .examples {
+.transport, .presets {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center;
   background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-  padding: 12px 16px; margin: 0 auto 12px; max-width: 920px;
+  padding: 12px 16px; margin: 0 auto 12px; max-width: 980px;
 }
 .transport label { display: flex; align-items: center; gap: 7px; color: var(--dim); font-size: 13px; }
-input[type=range] { accent-color: var(--accent); width: 110px; vertical-align: middle; }
-.status { color: var(--dim); font: 13px var(--mono); min-width: 12ch; }
-.status.err { color: #ff6b6b; }
+input[type=range] { accent-color: var(--accent); width: 96px; vertical-align: middle; }
+select { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; }
+.transport span { color: var(--ink); min-width: 14px; display: inline-block; text-align: right; }
 
 button { cursor: pointer; font: inherit; border: none; border-radius: 9px; transition: .12s; }
 .play {
@@ -42,55 +41,35 @@ button { cursor: pointer; font: inherit; border: none; border-radius: 9px; trans
 .play.on { background: linear-gradient(180deg, #ff5c5c, #d23b3b); color: #2a0606; }
 .ghost { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; }
 .ghost:hover { border-color: var(--accent); color: var(--accent); }
-.linkish { text-decoration: none; display: inline-block; }
-
-/* Code Crafter */
-.parts { max-width: 940px; margin: 0 auto; }
-.craft-part {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-  padding: 10px 12px; margin: 0 auto 8px;
-}
-.craft-steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; flex: 1; min-width: 240px; }
-.cstep { aspect-ratio: 1; min-width: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); }
-.cstep.beat { background: #23273a; }
-.cstep:hover { border-color: var(--accent); }
-.cstep.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px -1px var(--accent); }
-.craft-actions { max-width: 940px; margin: 4px auto 14px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
-.codeout { max-width: 940px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.codehdr { display: flex; gap: 8px; align-items: center; color: var(--dim); font-size: 13px; margin-bottom: 8px; }
-.codehdr > :nth-child(2) { margin-left: auto; }
-.codeprev { margin: 0; background: #0e1018; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: var(--ink); font: 13px/1.6 var(--mono); white-space: pre; overflow-x: auto; min-height: 2em; }
 .plabel { color: var(--dim); font-size: 13px; }
-.examples { flex-direction: column; gap: 8px; }
-.exrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
-.glabel { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 1px; min-width: 58px; text-align: right; }
-.ex { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; }
-.ex:hover { background: var(--accent); color: #1a0c00; }
+.preset { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; }
+.preset:hover { background: var(--accent); color: #1a0c00; }
 
-.editor { max-width: 920px; margin: 0 auto; }
-#code {
-  width: 100%; height: min(56vh, 520px); resize: vertical;
-  background: #0e1018; color: var(--ink); border: 1px solid var(--line); border-radius: 14px;
-  padding: 16px 18px; font: 13.5px/1.6 var(--mono); tab-size: 2; white-space: pre;
+.grid { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 7px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.name {
+  flex: 0 0 92px; text-align: left; background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-left: 4px solid var(--c); padding: 9px 10px;
+  border-radius: 9px; font-size: 13px; font-weight: 600;
 }
-#code:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-
-.cheat { max-width: 920px; margin: 12px auto 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
-.cheat summary { cursor: pointer; padding: 12px 16px; color: var(--dim); font-size: 13px; user-select: none; }
-.cheat summary:hover { color: var(--accent); }
-.cheatbody { padding: 0 18px 14px; color: var(--dim); font-size: 13px; }
-.cheatbody p { margin: 8px 0; }
-.cheatbody ul { margin: 8px 0; padding-left: 20px; }
-.cheatbody li { margin: 4px 0; }
-.cheatbody code { background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font: 12px var(--mono); color: var(--ink); }
-.cheatbody strong { color: var(--ink); }
+.name.muted { opacity: .4; text-decoration: line-through; }
+.steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; flex: 1; }
+.cell {
+  aspect-ratio: 1; min-width: 0; border-radius: 7px; border: 1px solid var(--line);
+  background: var(--panel2);
+}
+.cell.beatB { background: #23273a; }
+.cell:hover { border-color: var(--c); }
+.cell.on { background: var(--c); border-color: var(--c); box-shadow: 0 0 10px -1px var(--c); }
+.cell.playing { outline: 2px solid #fff; outline-offset: -2px; }
+.cell.on.playing { box-shadow: 0 0 16px 1px var(--c); }
 
 footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22px; }
 
 @media (max-width: 620px) {
+  .name { flex-basis: 64px; font-size: 11px; }
+  .steps { gap: 3px; }
   h1 { letter-spacing: 3px; }
-  #code { height: 50vh; font-size: 12.5px; }
 }
 
 </style>
@@ -98,60 +77,25 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
 <body>
   <header>
     <h1>THUDWORKS</h1>
-    <p class="tag">write a song in code.</p>
+    <p class="tag">make dope grooves.</p>
   </header>
 
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
+    <label>BPM <input id="bpm" type="range" min="60" max="180" value="88" /><span id="bpmVal">88</span></label>
+    <label>Swing <input id="swing" type="range" min="0" max="60" value="0" /><span id="swingVal">0</span>%</label>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
-    <button id="copy" class="ghost">Copy raw</button>
-    <button id="download" class="ghost">Generate WAV</button>
-    <a href="crafter.html" class="ghost linkish">Code Crafter ↗</a>
-    <span id="status" class="status"></span>
+    <label>Bass <select id="bassNote"></select></label>
+    <button id="clear" class="ghost">Clear</button>
+    <button id="random" class="ghost">Random</button>
   </section>
 
-  <section id="examples" class="examples"></section>
+  <section id="presets" class="presets"><span class="plabel">Presets:</span></section>
 
-  <main class="editor">
-    <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"
-              wrap="off" aria-label="song code"></textarea>
-  </main>
-
-  <details class="cheat">
-    <summary>How the code works</summary>
-    <div class="cheatbody">
-      <p><code>play(instrument, pattern, opts?)</code> adds a part. <code>tempo(bpm)</code> and
-      <code>swing(0–70)</code> set the clock. Every part loops to fill the longest one.</p>
-      <p><strong>Patterns</strong> read one 16th-note per cell:</p>
-      <ul>
-        <li><strong>Drums</strong> — one character per step: <code>x</code> = hit, <code>.</code> = rest.
-          Spaces are ignored, so you can group beats: <code>"x... x... x... x..."</code></li>
-        <li><strong>Pitched</strong> — space-separated tokens: a note like <code>C4</code> /
-          <code>F#3</code> / <code>Bb2</code> plays it, <code>.</code> = rest, <code>-</code> = hold (tie).
-          Stack notes with <code>+</code> for a chord: <code>C4+E4+G4</code>.</li>
-      </ul>
-      <p><strong>Arrange:</strong> <code>section('name', { instrument: pattern })</code> defines a
-        reusable block, then <code>arrange('a', 'b', 'a', …)</code> plays blocks in order (each part
-        tiles to fill its block). <code>transpose(pattern, semitones)</code> shifts notes — handy for
-        lifting a chorus to a new key. An instrument value can be <code>[pattern, opts]</code>.</p>
-      <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
-        <code>seq(...parts)</code> glues sections in order ·
-        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern ·
-        <code>length(bars)</code> fixes the total song length (default: the longest part).</p>
-      <p><strong>opts:</strong> <code>{ gain, swing, wave, cutoff, detune }</code> —
-        <code>gain</code> and <code>swing</code> (0–70, overrides the global) work on any part;
-        <code>wave</code>/<code>cutoff</code>/<code>detune</code> shape pitched parts.</p>
-      <p><strong>Generate WAV:</strong> renders your song offline to a lossless <code>.wav</code>
-        and saves it to your device — synthesized right in your browser, nothing fetched or uploaded.</p>
-      <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
-        pitched: bass (808), synth, lead, pad, pluck ·
-        NES: <code>pulse</code> &amp; <code>pulse2</code> (square channels), <code>tri</code> (triangle bass).</p>
-    </div>
-  </details>
+  <main id="grid" class="grid"></main>
 
   <footer>
-    <span>Every sound is synthesized live in your browser — no samples, no licensing.
-      Edit the code, hit Play. Pick a song above to start.</span>
+    <span>Every sound is synthesized live in your browser — no samples, no licensing. Tap a cell to program a step, hit Play.</span>
   </footer>
 
   <script>
@@ -252,27 +196,7 @@ function createKit(ctx, out) {
     o.connect(g).connect(out); o.start(t); o.stop(t + 0.24);
   }
 
-  // melodic voice — two detuned oscillators through a lowpass with an AD envelope.
-  // `dur` is the note length in seconds (set by the song engine from note ties).
-  function synth(t, gain = 1, freq = 440, opts = {}) {
-    const { wave = 'sawtooth', dur = 0.25, cutoff = 3000, detune = 6 } = opts;
-    const rel = Math.min(0.08, dur * 0.4), a = 0.006;
-    const f = ctx.createBiquadFilter(); f.type = 'lowpass';
-    f.frequency.setValueAtTime(Math.max(cutoff, 200), t);
-    f.frequency.exponentialRampToValueAtTime(Math.max(cutoff * 0.45, 200), t + dur);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(Math.max(gain, 0.0002), t + a);
-    g.gain.setValueAtTime(Math.max(gain, 0.0002), t + Math.max(dur - rel, a));
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    f.connect(g).connect(out);
-    for (const d of [-detune, detune]) {
-      const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq; o.detune.value = d;
-      o.connect(f); o.start(t); o.stop(t + dur + 0.05);
-    }
-  }
-
-  return { kick, bass, snare, hatClosed, hatOpen, clap, cowbell, clave, tom, synth };
+  return { kick, bass, snare, hatClosed, hatOpen, clap, cowbell, clave, tom };
 }
 
 // note name -> frequency (equal temperament, A4 = 440)
@@ -280,637 +204,237 @@ const SEMI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8,
 function noteFreq(name, octave) {
   return 440 * Math.pow(2, (SEMI[name] + (octave - 4) * 12 - 9) / 12);
 }
-// THUDWORKS — the song language + player.
-//
-// A song is plain code. You call play(instrument, pattern, opts?) for each part;
-// tempo()/swing() set the clock. Patterns are read one 16th-note per cell:
-//
-//   drums    — one character per step:  'x' (or any non-'.') = hit, '.' = rest.
-//              spaces are ignored, so you can group beats:  "x... x... x... x..."
-//   pitched  — whitespace-separated tokens, one per step:
-//              note "C4" / "F#3" / "Bb2" = play it, '.' = rest, '-' = hold (tie).
-//
-// Every part loops to fill the longest part, so a 1-bar drum loop repeats under a
-// 16-bar melody automatically. Build arrangements by composing strings with rep().
+// THUDWORKS — step sequencer transport. Uses the lookahead-scheduler pattern:
+// a setInterval wakes often and schedules upcoming steps slightly ahead on the
+// audio clock, so timing stays sample-tight regardless of UI jank.
 
-
-// instrument name -> { fn: kit method, pitched, opts: default voice tweaks }
-const VOICES = {
-  kick:    { fn: 'kick',      pitched: false },
-  snare:   { fn: 'snare',     pitched: false },
-  clap:    { fn: 'clap',      pitched: false },
-  hat:     { fn: 'hatClosed', pitched: false },
-  openhat: { fn: 'hatOpen',   pitched: false },
-  cowbell: { fn: 'cowbell',   pitched: false },
-  clave:   { fn: 'clave',     pitched: false },
-  tom:     { fn: 'tom',       pitched: false },
-  bass:    { fn: 'bass',      pitched: true  },                                   // 808 sub
-  synth:   { fn: 'synth',     pitched: true  },
-  lead:    { fn: 'synth',     pitched: true, opts: { wave: 'sawtooth', cutoff: 3500, detune: 8 } },
-  pad:     { fn: 'synth',     pitched: true, opts: { wave: 'sawtooth', cutoff: 1400, detune: 12 } },
-  pluck:   { fn: 'synth',     pitched: true, opts: { wave: 'triangle', cutoff: 2400, detune: 4 } },
-  pulse:   { fn: 'synth',     pitched: true, opts: { wave: 'square',   cutoff: 7000, detune: 0 } },  // NES pulse 1
-  pulse2:  { fn: 'synth',     pitched: true, opts: { wave: 'square',   cutoff: 5000, detune: 0 } },  // NES pulse 2
-  tri:     { fn: 'synth',     pitched: true, opts: { wave: 'triangle', cutoff: 2600, detune: 0 } },  // NES triangle
-};
-const INSTRUMENTS = Object.keys(VOICES);
-const PITCHED = INSTRUMENTS.filter(k => VOICES[k].pitched);   // need a note, not just 'x'
-
-const FLAT = { Cb: 'B', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
-const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-function tokenFreq(tok) {
-  const m = tok.match(/^([A-Ga-g])([#b]?)(-?\d)$/);
-  if (!m) throw new Error(`bad note "${tok}"`);
-  let name = m[1].toUpperCase() + (m[2] || '');
-  if (name.length === 2 && name[1] === 'b') name = FLAT[name] || name;
-  return noteFreq(name, +m[3]);
-}
-
-const parseDrum = str => [...str].filter(c => !/\s/.test(c)).map(c => (c === '.' || c === '_' ? null : { vel: 1 }));
-const parsePitched = str => str.trim().split(/\s+/).filter(Boolean).map(t =>
-  (t === '.' || t === '_') ? { rest: true }
-  : (t === '-' || t === '~') ? { tie: true }
-  : { freqs: t.split('+').map(tokenFreq) });                                     // "C4+E4+G4" = a chord
-
-// Run the user's code with the DSL helpers in scope; collect the parts.
-function compile(code) {
-  let bpm = 120, swing = 0, lengthBars = 0;
-  const tracks = [];
-  const rep = (s, n) => Array.from({ length: n }, () => s).join(' ');
-  const seq = (...parts) => parts.join(' ');                                     // glue sections in order
-  const euclid = (hits, steps, rot = 0) => {                                     // even-spread rhythm
-    let s = '';
-    for (let i = 0; i < steps; i++) s += ((i * hits) % steps) < hits ? 'x' : '.';
-    return s.slice(rot % steps) + s.slice(0, rot % steps);
-  };
-  const tempo = v => { bpm = +v; };
-  const swingFn = v => { swing = +v; };
-  const length = v => { lengthBars = Math.max(1, Math.floor(+v)); };             // fix total song length
-  const cellsOf = (inst, pattern) => {
-    const meta = VOICES[inst];
-    if (!meta) throw new Error(`unknown instrument "${inst}" — try: ${INSTRUMENTS.join(', ')}`);
-    return meta.pitched ? parsePitched(pattern) : parseDrum(pattern);
-  };
-  const play = (inst, pattern, opts = {}) => {
-    const cells = cellsOf(inst, pattern);
-    if (!cells.length) throw new Error(`"${inst}" pattern is empty`);
-    tracks.push({ meta: VOICES[inst], cells, opts });
-  };
-
-  // section(name, { instrument: pattern | [pattern, opts] }) defines a reusable block;
-  // arrange(...names) plays those blocks in order, tiling each part to the block's length.
-  const sections = {};
-  const pat = v => Array.isArray(v) ? v[0] : v;
-  const section = (name, parts) => {
-    let bars = 1;
-    for (const [inst, v] of Object.entries(parts)) bars = Math.max(bars, Math.ceil(cellsOf(inst, pat(v)).length / 16));
-    sections[name] = { parts, bars };
-  };
-  const arrange = (...names) => {
-    const secs = names.map(n => { if (!sections[n]) throw new Error(`unknown section "${n}"`); return sections[n]; });
-    const used = {};
-    for (const s of secs) for (const k of Object.keys(s.parts)) used[k] = true;
-    for (const inst of Object.keys(used)) {
-      const meta = VOICES[inst]; const cells = []; let opts = {};
-      for (const s of secs) {
-        const target = s.bars * 16;
-        if (inst in s.parts) {
-          const v = s.parts[inst], cs = cellsOf(inst, pat(v));
-          if (Array.isArray(v) && v[1]) opts = { ...opts, ...v[1] };
-          for (let i = 0; i < target; i++) cells.push(cs[i % cs.length]);
-        } else {
-          for (let i = 0; i < target; i++) cells.push(meta.pitched ? { rest: true } : null);
-        }
-      }
-      tracks.push({ meta, cells, opts });
-    }
-  };
-  // transpose a pitched pattern by N semitones (chords and ties pass through)
-  const transpose = (pattern, semis) => pattern.trim().split(/\s+/).map(tok =>
-    /^[.\-_~]$/.test(tok) ? tok : tok.split('+').map(nt => {
-      const m = nt.match(/^([A-Ga-g])([#b]?)(-?\d)$/);
-      if (!m) throw new Error(`bad note "${nt}"`);
-      let name = m[1].toUpperCase() + (m[2] || '');
-      if (name.length === 2 && name[1] === 'b') name = FLAT[name] || name;
-      const abs = (+m[3]) * 12 + NAMES.indexOf(name) + (+semis);
-      return NAMES[((abs % 12) + 12) % 12] + Math.floor(abs / 12);
-    }).join('+')).join(' ');
-
-  new Function('tempo', 'swing', 'play', 'rep', 'euclid', 'seq', 'length', 'section', 'arrange', 'transpose', code)
-    (tempo, swingFn, play, rep, euclid, seq, length, section, arrange, transpose);
-  if (!tracks.length) throw new Error('no play() calls — nothing to play');
-  return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)),
-           cells: lengthBars * 16, tracks };                                     // cells 0 = auto (longest part)
-}
-
-class SongPlayer {
-  constructor(ctx, kit) { this.ctx = ctx; this.kit = kit; this.playing = false; this.timer = null; }
-
-  load(song) {
-    this.bpm = song.bpm;
-    const six = (60 / song.bpm) / 4;
-    const cells = song.cells || Math.max(...song.tracks.map(t => t.cells.length));
-    this.six = six; this.bars = Math.ceil(cells / 16); this.songDur = cells * six;
-
-    const events = [];
-    for (const tr of song.tracks) {
-      const n = tr.cells.length, gain = tr.opts.gain ?? 1, fn = this.kit[tr.meta.fn];
-      const swing = Math.min(70, Math.max(0, tr.opts.swing ?? song.swing));      // per-part swing override
-      for (let c = 0; c < cells; c++) {
-        const cell = tr.cells[c % n];
-        if (!cell || cell.rest || cell.tie) continue;
-        const time = c * six + (c % 2 ? six * (swing / 100) : 0);
-        if (tr.meta.pitched) {
-          let dur = 1;                                                           // extend over following ties
-          while (tr.cells[(c + dur) % n] && tr.cells[(c + dur) % n].tie && c + dur < cells) dur++;
-          const opts = { ...(tr.meta.opts || {}), ...tr.opts, dur: dur * six * 0.92 };
-          const vg = gain / Math.sqrt(cell.freqs.length);                        // keep a chord's loudness in check
-          for (const freq of cell.freqs) events.push({ time, run: when => fn(when, vg, freq, opts) });
-        } else {
-          events.push({ time, run: when => fn(when, gain * cell.vel) });
-        }
-      }
-    }
-    events.sort((a, b) => a.time - b.time);
-    this.events = events;
+class Sequencer {
+  constructor(ctx, onTrigger) {
+    this.ctx = ctx;
+    this.onTrigger = onTrigger;     // (stepIndex, time) => play that column's voices
+    this.bpm = 90;
+    this.swing = 0;                 // 0..70 (%) — delays every other 16th
+    this.steps = 16;
+    this.current = 0;
+    this.nextTime = 0;
+    this.playing = false;
+    this.lookaheadMs = 25;
+    this.scheduleAhead = 0.12;      // seconds
+    this.timer = null;
+    this.queue = [];                // {step, time} for the visual playhead
   }
+
+  get sixteenth() { return (60 / this.bpm) / 4; }
 
   start() {
-    if (this.playing || !this.events || !this.events.length) return;
-    this.playing = true; this.idx = 0;
-    this.songStart = this.loopStart = this.ctx.currentTime + 0.1;
-    this.timer = setInterval(() => this._tick(), 25);
+    if (this.playing) return;
+    this.playing = true;
+    this.current = 0;
+    this.nextTime = this.ctx.currentTime + 0.06;
+    this.timer = setInterval(() => this._schedule(), this.lookaheadMs);
   }
 
-  stop() { this.playing = false; clearInterval(this.timer); }
-
-  bar() {                                                                        // 1-based bar for display
-    if (!this.playing) return 0;
-    const elapsed = this.ctx.currentTime - this.songStart;
-    if (elapsed < 0) return 1;
-    return Math.floor(((elapsed / this.six) % (this.bars * 16)) / 16) + 1;
+  stop() {
+    this.playing = false;
+    clearInterval(this.timer);
+    this.queue.length = 0;
   }
 
-  _tick() {
-    const ahead = this.ctx.currentTime + 0.12;
-    while (this.playing) {
-      if (this.idx >= this.events.length) { this.loopStart += this.songDur; this.idx = 0; }
-      const ev = this.events[this.idx];
-      const when = this.loopStart + ev.time;
-      if (when >= ahead) break;
-      ev.run(when); this.idx++;
+  _schedule() {
+    while (this.nextTime < this.ctx.currentTime + this.scheduleAhead) {
+      // swing: push odd (off-beat) 16ths later
+      const swingSec = this.sixteenth * (this.swing / 100);
+      const playTime = this.nextTime + (this.current % 2 ? swingSec : 0);
+      this.onTrigger(this.current, playTime);
+      this.queue.push({ step: this.current, time: playTime });
+      this.nextTime += this.sixteenth;
+      this.current = (this.current + 1) % this.steps;
     }
   }
 }
-// THUDWORKS — example songs, grouped by genre. Each is fully arranged with
-// section(name, { instrument: pattern }) + arrange(...names).
-// Click one in the app to load it into the editor and play it.
+// THUDWORKS — app glue: builds the grid, wires transport + controls, draws the playhead.
 
-const EXAMPLES = [
-  {
-    group: 'VGM',
-    songs: [
-      {
-        name: 'Overworld',
-        code: `
-// OVERWORLD — bright NES march in C. Two pulse channels + triangle bass + noise drums.
-// pulse = lead, pulse2 = fast arpeggio (how the NES fakes chords), tri = bass.
-tempo(144)
+const STEPS = 16;
 
-section('intro', {
-  tri: ["C2 . C3 . C2 . C3 . C2 . C3 . C2 . C3 .", { gain: 0.5 }],
-  hat: "..x...x...x...x.",
-})
-section('main', {
-  kick:  "x.......x.......",
-  snare: "....x.......x...",
-  hat:   "x.x.x.x.x.x.x.x.",
-  tri:   [seq("C2 . C3 . C2 . C3 . G1 . G2 . G1 . G2 .",
-              "A1 . A2 . A1 . A2 . F1 . F2 . F1 . F2 ."), { gain: 0.5 }],
-  pulse2:[seq("C5 E5 G5 E5 C5 E5 G5 E5 C5 E5 G5 E5 C5 E5 G5 E5",
-              "A4 C5 E5 C5 A4 C5 E5 C5 F4 A4 C5 A4 F4 A4 C5 A4"), { gain: 0.28 }],
-  pulse: [seq("E5 . G5 . E5 . C5 . D5 . E5 . G5 . . .",
-              "E5 . D5 . C5 . A4 . C5 . . . . . . ."), { gain: 0.4 }],
-})
-arrange('intro', 'main', 'main', 'main', 'main')
-`,
-      },
-      {
-        name: 'Boss Battle',
-        code: `
-// BOSS BATTLE — fast, tense Am. Pounding triangle, frantic arp, screaming lead.
-tempo(168)
-
-section('build', {
-  hat: "xxxxxxxxxxxxxxxx",
-  tri: ["A1 . . . A1 . . . A1 . . . A1 . . .", { gain: 0.5 }],
-})
-section('main', {
-  kick:  "x...x...x...x...",
-  snare: "....x.......x...",
-  hat:   "x.x.x.x.x.x.x.x.",
-  tri:   [seq("A1 A1 . A1 A1 . A1 . E1 E1 . E1 E1 . E1 .",
-              "F1 F1 . F1 F1 . F1 . G1 G1 . G1 G1 . G1 ."), { gain: 0.5 }],
-  pulse2:[seq("A4 C5 E5 C5 A4 C5 E5 C5 A4 C5 E5 C5 A4 C5 E5 C5",
-              "F4 A4 C5 A4 F4 A4 C5 A4 G4 B4 D5 B4 G4 B4 D5 B4"), { gain: 0.26 }],
-  pulse: [seq("A5 . . G5 . . E5 . F5 . E5 . D5 . C5 .",
-              "E5 . . . D5 . C5 . B4 . . . E5 . . ."), { gain: 0.4 }],
-})
-arrange('build', 'main', 'main', 'main', 'main', 'main')
-`,
-      },
-      {
-        name: 'Dungeon',
-        code: `
-// DUNGEON — slow and eerie in Dm. Sparse pulse over a creeping triangle.
-tempo(100)
-
-section('main', {
-  hat:   "....x.......x...",
-  tri:   ["D2 . . . D2 . . . A1 . . . A1 . . .", { gain: 0.5 }],
-  pulse: [seq("D5 . . . F5 . . . E5 . . . . . . .",
-              "A4 . . . D5 . . . C5 . . . A4 . . ."), { cutoff: 3500, gain: 0.35 }],
-})
-section('turn', {
-  hat:    "....x.......x...",
-  tri:    ["A#1 . . . A#1 . . . G1 . . . A1 . . .", { gain: 0.5 }],
-  pulse:  [seq("F5 . . . E5 . . . D5 . . . . . . .",
-               "A4 . . . C5 . . . D5 . F5 . E5 . . ."), { cutoff: 3500, gain: 0.35 }],
-  pulse2: ["D4+F4+A4 - - - - - - - - - - - - - - -", { gain: 0.16 }],
-})
-arrange('main', 'main', 'turn', 'main', 'turn')
-`,
-      },
-      {
-        name: 'Title',
-        code: `
-// TITLE — a triumphant fanfare; the reprise lifts up a whole step (transpose +2).
-tempo(132)
-
-section('fanfare', {
-  snare: "....x.......x...",
-  hat:   "x.x.x.x.x.x.x.x.",
-  tri:   ["C2 . G2 . C2 . G2 . C2 . G2 . C2 . G2 .", { gain: 0.5 }],
-  pulse2:["C4+E4+G4 - - - C4+E4+G4 - - - G3+B3+D4 - - - G3+B3+D4 - - -", { gain: 0.2 }],
-  pulse: [seq("C5 . E5 . G5 . C6 . B5 . G5 . E5 . C5 .",
-              "D5 . G5 . B5 . D6 . C6 . . . . . . ."), { gain: 0.42 }],
-})
-section('reprise', {
-  snare: "....x.......x...",
-  hat:   "x.x.x.x.x.x.x.x.",
-  tri:   [transpose("C2 . G2 . C2 . G2 . C2 . G2 . C2 . G2 .", 2), { gain: 0.5 }],
-  pulse2:[transpose("C4+E4+G4 - - - C4+E4+G4 - - - G3+B3+D4 - - - G3+B3+D4 - - -", 2), { gain: 0.2 }],
-  pulse: [transpose(seq("C5 . E5 . G5 . C6 . B5 . G5 . E5 . C5 .",
-                        "D5 . G5 . B5 . D6 . C6 . . . . . . ."), 2), { gain: 0.42 }],
-})
-arrange('fanfare', 'fanfare', 'reprise', 'reprise')
-`,
-      },
-    ],
-  },
-  {
-    group: 'EDM',
-    songs: [
-      {
-        name: 'Acid House',
-        code: `
-// ACID HOUSE — 128bpm. '-' holds a note so the 303 slides. Builds to a peak.
-tempo(128)
-
-section('intro', { kick: "x...x...x...x...", openhat: "..x...x...x...x." })
-section('main', {
-  kick:    "x...x...x...x...",
-  clap:    "....x.......x...",
-  openhat: "..x...x...x...x.",
-  synth:   [seq("A1 . A2 - C2 . A1 . E2 - A1 . C2 . D2 .",
-                "A1 . A2 - C2 . E2 . A2 - G2 . E2 . D2 ."),
-            { wave: 'sawtooth', cutoff: 1200, detune: 6, gain: 0.5 }],
-})
-section('peak', {
-  kick:    "x...x...x...x...",
-  clap:    "....x.......x...",
-  openhat: "x.x.x.x.x.x.x.x.",
-  synth:   [seq("A2 . A3 - C3 . A2 . E3 - A2 . C3 . D3 .",
-                "A2 . C3 . E3 . D3 . C3 . A2 . G2 . E2 ."),
-            { wave: 'sawtooth', cutoff: 2200, detune: 8, gain: 0.45 }],
-})
-
-arrange('intro', 'main', 'main', 'peak', 'main', 'peak', 'peak')
-`,
-      },
-      {
-        name: 'Deep House',
-        code: `
-// DEEP HOUSE — 122bpm chord stabs ('+' = chord). Goes to a deeper key, then back.
-tempo(122)
-
-section('intro', { kick: "x...x...x...x...", openhat: "..x...x...x...x." })
-section('main', {
-  kick:    "x...x...x...x...",
-  clap:    "....x.......x...",
-  openhat: "..x...x...x...x.",
-  bass:    "F1 . . . F1 . . . A#1 . . . C2 . . .",
-  pad:     [". . F3+A3+C4 . . . . . D#3+G3+A#3 . . . . . . .",
-            { wave: 'sawtooth', cutoff: 1700, detune: 10, gain: 0.3 }],
-})
-section('deep', {
-  kick:    "x...x...x...x...",
-  clap:    "....x.......x...",
-  openhat: "x.x.x.x.x.x.x.x.",
-  bass:    "D1 . . . D1 . . . G1 . . . A1 . . .",
-  pad:     [". . D3+F3+A3 . . . . . G3+A#3+D4 . . . . . . .",
-            { wave: 'sawtooth', cutoff: 2000, detune: 10, gain: 0.3 }],
-})
-
-arrange('intro', 'main', 'main', 'deep', 'main', 'deep', 'deep', 'main')
-`,
-      },
-      {
-        name: 'Euclid Techno',
-        code: `
-// EUCLID TECHNO — euclid(hits, steps) spreads hits evenly. Lift section adds a lead.
-tempo(130)
-
-section('intro', { kick: "x...x...x...x...", openhat: euclid(7, 16) })
-section('main', {
-  kick:    "x...x...x...x...",
-  openhat: euclid(7, 16),
-  clap:    euclid(2, 16, 4),
-  bass:    ["A1 . . . A1 . . . C2 . . . E2 . . .", { wave: 'sawtooth', cutoff: 900, detune: 4 }],
-})
-section('lift', {
-  kick:    "x...x...x...x...",
-  openhat: euclid(9, 16),
-  clap:    euclid(4, 16, 2),
-  bass:    ["A1 . . . C2 . . . E2 . . . G2 . . .", { wave: 'sawtooth', cutoff: 1400, detune: 4 }],
-  lead:    [seq("A3 . . E4 . . C4 . . E4 . . D4 . . .",
-                "E4 . . C4 . . A3 . . B3 . . D4 . . ."), { gain: 0.3 }],
-})
-
-arrange('intro', 'main', 'main', 'lift', 'main', 'lift', 'lift')
-`,
-      },
-      {
-        name: 'Arranged',
-        code: `
-// ARRANGED — the full toolkit: section/arrange, per-part swing, chords, and
-// transpose() to lift the chorus up a fourth.
-tempo(124)
-
-section('intro', { kick: "x...x...x...x...", openhat: "..x...x...x...x." })
-section('build', {
-  kick:    "x...x...x...x...",
-  clap:    "....x.......x...",
-  openhat: ["..x...x...x...x.", { swing: 33 }],
-  bass:    "A1 . . . A1 . . . C2 . . . E2 . . .",
-})
-section('drop', {
-  kick:    "x.x.x.x.x.x.x.x.",
-  clap:    "....x.......x...",
-  openhat: ["..x...x...x...x.", { swing: 33 }],
-  bass:    "A1 . . . A1 . . . C2 . . . E2 . . .",
-  pad:     ["A3+C4+E4 - - - - - - - F3+A3+C4 - - - - - - -", { gain: 0.3 }],
-})
-section('lift', {       // chorus, transposed up a perfect fourth (+5 semitones)
-  kick:    "x.x.x.x.x.x.x.x.",
-  clap:    "....x.......x...",
-  openhat: ["..x...x...x...x.", { swing: 33 }],
-  bass:    transpose("A1 . . . A1 . . . C2 . . . E2 . . .", 5),
-  pad:     [transpose("A3+C4+E4 - - - - - - - F3+A3+C4 - - - - - - -", 5), { gain: 0.3 }],
-})
-
-arrange('intro', 'build', 'drop', 'drop', 'lift', 'drop', 'lift')
-`,
-      },
-    ],
-  },
-  {
-    group: 'Hip-Hop',
-    songs: [
-      {
-        name: 'Boom Bap',
-        code: `
-// BOOM BAP — dusty 90bpm head-nod, with a 2-bar riff section
-tempo(90)
-swing(14)
-
-section('intro', {
-  kick: "x.......x.......",
-  hat:  "x.x.x.x.x.x.x.x.",
-})
-section('groove', {
-  kick:    "x.....x...x.....",
-  snare:   "....x.......x...",
-  hat:     "x.x.x.x.x.x.x.x.",
-  openhat: "..........x.....",
-  bass:    "C2 . . . . . . . G1 . . . . . . .",
-})
-section('riff', {
-  kick:  "x.....x...x.....",
-  snare: "....x.......x...",
-  hat:   "x.x.x.x.x.x.x.x.",
-  bass:  "C2 . . . A1 . . . F1 . . . G1 . . .",
-  pluck: [seq("E4 . G4 . A4 . G4 E4 D4 . . . . . . .",
-              "E4 . G4 . C5 . B4 . A4 . . . . . . ."), { gain: 0.4 }],
-})
-section('outro', { kick: "x.......x.......", bass: "C2 . . . . . . . . . . . . . . ." })
-
-arrange('intro', 'groove', 'riff', 'groove', 'riff', 'riff', 'outro')
-`,
-      },
-      {
-        name: 'Trap',
-        code: `
-// TRAP — 140, rolling hats, sliding 808, chord pad. A roll section every 4th bar.
-tempo(140)
-
-section('intro', {
-  hat:  "xxxxx.xxxxx.xx.x",
-  bass: "C1 . . . . . . . C1 . D#1 . F1 . . .",
-})
-section('main', {
-  kick:    "x.....x.....x...",
-  snare:   "........x.......",
-  hat:     "xxxxx.xxxxx.xx.x",
-  openhat: "..........x.....",
-  bass:    "C1 . . . . . . . C1 . D#1 . F1 . . .",
-  pad:     ["C3+D#3+G3 - - - - - - - G#2+C3+D#3 - - - A#2+D3+F3 - - -", { gain: 0.26 }],
-})
-section('roll', {
-  kick:  "x.....x.....x.x.",
-  snare: "........x.....x.",
-  hat:   "xxxxxxxxxxxxxxxx",
-  bass:  "C1 . . . F1 . . . G#1 . . . A#1 . . .",
-  pad:   ["C3+D#3+G3 - - - - - - - - - - - - - - -", { gain: 0.26 }],
-})
-
-arrange('intro', 'main', 'main', 'roll', 'main', 'main', 'roll', 'main')
-`,
-      },
-      {
-        name: 'Lo-Fi',
-        code: `
-// LO-FI — 78bpm, sleepy and swung, with a chord turnaround
-tempo(78)
-swing(18)
-
-section('intro', {
-  hat:   "..x...x...x...x.",
-  pluck: ["E4 . G4 B4 . A4 . G4 E4 . D4 . . . . .", { wave: 'triangle', cutoff: 2200, gain: 0.4 }],
-})
-section('verse', {
-  kick:  "x.......x.....x.",
-  snare: "....x.......x...",
-  hat:   "..x...x...x...x.",
-  bass:  "E2 . . . . . . . C2 . . . D2 . . .",
-  pluck: [seq("E4 . G4 B4 . A4 . G4 E4 . D4 . . . . .",
-              "C5 . B4 . A4 . G4 . E4 . . . D4 . . ."),
-          { wave: 'triangle', cutoff: 2200, gain: 0.4 }],
-})
-section('turn', {
-  kick:  "x.......x.......",
-  snare: "....x.......x...",
-  hat:   "..x...x...x...x.",
-  bass:  "A1 . . . . . . . G1 . . . C2 . . .",
-  pad:   ["E3+G3+B3 - - - - - - - A3+C4+E4 - - - - - - -", { gain: 0.25 }],
-})
-
-arrange('intro', 'verse', 'verse', 'turn', 'verse', 'turn')
-`,
-      },
-    ],
-  },
+// tracks (top -> bottom). `voice` names a function on the kit; `pitched` rows follow the bass note.
+const TRACKS = [
+  { key: 'kick',    label: 'Kick',     voice: 'kick',      color: '#ff4d4d' },
+  { key: 'bass',    label: '808 Bass', voice: 'bass',      color: '#ff8a3d', pitched: true },
+  { key: 'snare',   label: 'Snare',    voice: 'snare',     color: '#ffd23d' },
+  { key: 'clap',    label: 'Clap',     voice: 'clap',      color: '#a3ff3d' },
+  { key: 'hatC',    label: 'Hat',      voice: 'hatClosed', color: '#3dffd2' },
+  { key: 'hatO',    label: 'Open Hat', voice: 'hatOpen',   color: '#3dc5ff' },
+  { key: 'cowbell', label: 'Cowbell',  voice: 'cowbell',   color: '#9d8aff' },
+  { key: 'clave',   label: 'Clave',    voice: 'clave',     color: '#ff6ad5' },
+  { key: 'tom',     label: 'Tom',      voice: 'tom',       color: '#ff9db1' },
 ];
-// THUDWORKS — app glue: a code editor that compiles to a song, transport, examples.
 
-let ctx, kit, master, player;
+// preset patterns. Each string is 16 chars; 'x' = hit. Empty/missing = silent row.
+const P = s => Array.from({ length: STEPS }, (_, i) => s[i] === 'x');
+const PRESETS = {
+  'Boom Bap': { bpm: 88, p: {
+    kick:  'x.......x...x...', snare: '....x.......x...',
+    hatC:  'x.x.x.x.x.x.x.x.', bass:  'x.......x.......' } },
+  'Trap': { bpm: 140, p: {
+    kick:  'x.....x...x.....', snare: '........x.......', clap: '........x.......',
+    hatC:  'xxxxxxxxxxxxxxxx', hatO: '..........x.....', bass: 'x.....x...x.....' } },
+  'House': { bpm: 124, p: {
+    kick:  'x...x...x...x...', clap: '....x.......x...',
+    hatO:  '..x...x...x...x.', hatC: 'x.x.x.x.x.x.x.x.', bass: 'x...x...x...x...' } },
+  'Funk': { bpm: 102, p: {
+    kick:  'x..x...x..x.....', snare: '....x.......x...',
+    hatC:  'xxxxxxxxxxxxxxxx', cowbell: '....x...x...x...', bass: 'x..x...x..x.....' } },
+};
 
-const codeEl = document.getElementById('code');
-const playBtn = document.getElementById('play');
-const volEl = document.getElementById('vol');
-const statusEl = document.getElementById('status');
-const downloadBtn = document.getElementById('download');
-const copyBtn = document.getElementById('copy');
-const NOOP_KIT = new Proxy({}, { get: () => () => {} });
-let rendering = false;
+// ---- state ----
+let ctx, kit, master, seq;
+const pattern = {};            // key -> [bool x16]
+const muted = {};              // key -> bool
+TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
+let bassNote = { name: 'C', octave: 2 };
 
+// ---- audio bootstrap (must happen on a user gesture) ----
 function ensureAudio() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
-  master = ctx.createGain(); master.gain.value = +volEl.value;
-  const comp = ctx.createDynamicsCompressor();            // glue + soft limit so stacks don't clip
+  master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor();       // glue + soft limit so stacks don't clip
   master.connect(comp).connect(ctx.destination);
   kit = createKit(ctx, master);
-  player = new SongPlayer(ctx, kit);
-  requestAnimationFrame(tickStatus);
+  seq = new Sequencer(ctx, triggerColumn);
+  seq.bpm = +bpmEl.value;
+  seq.swing = +swingEl.value;
+  requestAnimationFrame(drawPlayhead);
 }
 
-function setStatus(msg, error = false) {
-  statusEl.textContent = msg;
-  statusEl.classList.toggle('err', error);
+function triggerColumn(step, time) {
+  for (const t of TRACKS) {
+    if (muted[t.key] || !pattern[t.key][step]) continue;
+    const fn = kit[t.voice];
+    if (t.pitched) fn(time, 1, noteFreq(bassNote.name, bassNote.octave));
+    else fn(time, 1);
+  }
 }
 
-function stop() {
-  if (player) player.stop();
-  playBtn.textContent = '▶ Play'; playBtn.classList.remove('on');
+// ---- DOM ----
+const grid = document.getElementById('grid');
+const bpmEl = document.getElementById('bpm');
+const bpmVal = document.getElementById('bpmVal');
+const swingEl = document.getElementById('swing');
+const swingVal = document.getElementById('swingVal');
+const volEl = document.getElementById('vol');
+const playBtn = document.getElementById('play');
+const cells = {};              // key -> [button x16]
+
+function buildGrid() {
+  for (const t of TRACKS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const name = document.createElement('button');
+    name.className = 'name'; name.textContent = t.label;
+    name.style.setProperty('--c', t.color);
+    name.onclick = () => { muted[t.key] = !muted[t.key]; name.classList.toggle('muted', muted[t.key]); };
+    row.appendChild(name);
+
+    const steps = document.createElement('div'); steps.className = 'steps';
+    cells[t.key] = [];
+    for (let i = 0; i < STEPS; i++) {
+      const c = document.createElement('button');
+      c.className = 'cell' + (Math.floor(i / 4) % 2 ? ' beatB' : ' beatA');
+      c.style.setProperty('--c', t.color);
+      c.onclick = () => {
+        ensureAudio();
+        pattern[t.key][i] = !pattern[t.key][i];
+        c.classList.toggle('on', pattern[t.key][i]);
+        if (pattern[t.key][i]) {                       // audition the hit
+          const fn = kit[t.voice];
+          t.pitched ? fn(ctx.currentTime, 1, noteFreq(bassNote.name, bassNote.octave)) : fn(ctx.currentTime, 1);
+        }
+      };
+      cells[t.key].push(c); steps.appendChild(c);
+    }
+    row.appendChild(steps); grid.appendChild(row);
+  }
 }
 
-// Compile what's in the editor and start playing it. Returns true on success.
-function run() {
+function syncGrid() {
+  for (const t of TRACKS)
+    cells[t.key].forEach((c, i) => c.classList.toggle('on', pattern[t.key][i]));
+}
+
+// ---- visual playhead ----
+let lastCol = -1;
+function drawPlayhead() {
+  if (seq && seq.playing) {
+    while (seq.queue.length && seq.queue[0].time < ctx.currentTime) {
+      const col = seq.queue.shift().step;
+      if (col !== lastCol) { highlight(col); lastCol = col; }
+    }
+  }
+  requestAnimationFrame(drawPlayhead);
+}
+function highlight(col) {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  for (const t of TRACKS) cells[t.key][col]?.classList.add('playing');
+}
+function clearHighlight() {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  lastCol = -1;
+}
+
+// ---- controls ----
+playBtn.onclick = () => {
   ensureAudio();
   if (ctx.state === 'suspended') ctx.resume();
-  player.stop();
-  let song;
-  try { song = compile(codeEl.value); }
-  catch (e) { setStatus('⚠ ' + e.message, true); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); return false; }
-  player.load(song);
-  player.start();
-  playBtn.textContent = '■ Stop'; playBtn.classList.add('on');
-  return true;
-}
-
-playBtn.onclick = () => { if (player && player.playing) stop(); else run(); };
+  if (seq.playing) { seq.stop(); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); clearHighlight(); }
+  else { seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
+};
+bpmEl.oninput = () => { bpmVal.textContent = bpmEl.value; if (seq) seq.bpm = +bpmEl.value; };
+swingEl.oninput = () => { swingVal.textContent = swingEl.value; if (seq) seq.swing = +swingEl.value; };
 volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
-copyBtn.onclick = async () => {
-  try { await navigator.clipboard.writeText(codeEl.value); setStatus('copied to clipboard ✓'); }
-  catch { setStatus('copy failed — select the code and copy manually', true); }
+
+document.getElementById('clear').onclick = () => {
+  TRACKS.forEach(t => pattern[t.key].fill(false)); syncGrid();
+};
+document.getElementById('random').onclick = () => {
+  const density = { kick: .25, snare: .12, clap: .08, hatC: .55, hatO: .12,
+                    cowbell: .1, clave: .1, tom: .08, bass: .22 };
+  TRACKS.forEach(t => pattern[t.key] = Array.from({ length: STEPS }, () => Math.random() < (density[t.key] || .2)));
+  syncGrid();
 };
 
-// live status: tempo + bar while playing
-function tickStatus() {
-  if (!rendering && player && player.playing) setStatus(`♪ ${player.bpm} bpm · bar ${player.bar()} / ${player.bars}`);
-  requestAnimationFrame(tickStatus);
-}
-
-// ---- download: render the song offline and write a .wav (no libraries) ----
-async function renderWav(song) {
-  const sr = 44100;
-  const probe = new SongPlayer({ currentTime: 0 }, NOOP_KIT); probe.load(song);   // just for songDur
-  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  const off = new OAC(2, Math.ceil((probe.songDur + 0.6) * sr), sr);              // +tail for release
-  const m = off.createGain(); m.gain.value = +volEl.value;
-  const comp = off.createDynamicsCompressor(); m.connect(comp).connect(off.destination);
-  const player2 = new SongPlayer(off, createKit(off, m)); player2.load(song);
-  for (const ev of player2.events) ev.run(ev.time);                              // schedule at absolute times
-  return bufferToWav(await off.startRendering());
-}
-
-function bufferToWav(buf) {
-  const nch = buf.numberOfChannels, sr = buf.sampleRate, n = buf.length;
-  const ab = new ArrayBuffer(44 + n * nch * 2), view = new DataView(ab);
-  const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-  str(0, 'RIFF'); view.setUint32(4, 36 + n * nch * 2, true); str(8, 'WAVE');
-  str(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, nch, true);
-  view.setUint32(24, sr, true); view.setUint32(28, sr * nch * 2, true); view.setUint16(32, nch * 2, true); view.setUint16(34, 16, true);
-  str(36, 'data'); view.setUint32(40, n * nch * 2, true);
-  const chans = []; for (let c = 0; c < nch; c++) chans.push(buf.getChannelData(c));
-  let o = 44;
-  for (let i = 0; i < n; i++) for (let c = 0; c < nch; c++) {
-    const s = Math.max(-1, Math.min(1, chans[c][i]));
-    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); o += 2;
-  }
-  return new Blob([ab], { type: 'audio/wav' });
-}
-
-downloadBtn.onclick = async () => {
-  let song;
-  try { song = compile(codeEl.value); }
-  catch (e) { setStatus('⚠ ' + e.message, true); return; }
-  rendering = true; setStatus('generating WAV…'); downloadBtn.disabled = true;
-  try {
-    const blob = await renderWav(song);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'thudworks.wav'; a.click();
-    URL.revokeObjectURL(a.href);
-    setStatus('saved thudworks.wav ✓');
-  } catch (e) { setStatus('⚠ render failed: ' + e.message, true); }
-  finally { rendering = false; downloadBtn.disabled = false; }
-};
-
-// example songs, grouped by genre — each loads into the editor and plays on click
-const exBar = document.getElementById('examples');
-EXAMPLES.forEach(group => {
-  const row = document.createElement('div'); row.className = 'exrow';
-  const label = document.createElement('span'); label.className = 'glabel'; label.textContent = group.group;
-  row.appendChild(label);
-  group.songs.forEach(ex => {
-    const b = document.createElement('button'); b.className = 'ex'; b.textContent = ex.name;
-    b.onclick = () => { codeEl.value = ex.code.trim(); run(); };
-    row.appendChild(b);
-  });
-  exBar.appendChild(row);
+// preset buttons
+const presetBar = document.getElementById('presets');
+Object.keys(PRESETS).forEach(name => {
+  const b = document.createElement('button'); b.textContent = name; b.className = 'preset';
+  b.onclick = () => {
+    const { bpm, p } = PRESETS[name];
+    TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+    bpmEl.value = bpm; bpmVal.textContent = bpm; if (seq) seq.bpm = bpm;
+    syncGrid();
+  };
+  presetBar.appendChild(b);
 });
 
-// boot: code handed over from the Code Crafter wins, else the first example
-const fromCrafter = localStorage.getItem('thudworks:craft');
-if (fromCrafter) {
-  localStorage.removeItem('thudworks:craft');
-  codeEl.value = fromCrafter;
-  setStatus('loaded from Code Crafter — press ▶ Play');
-} else {
-  codeEl.value = EXAMPLES[0].songs[0].code.trim();
-  setStatus('press ▶ Play — or pick a song above');
-}
+// bass note picker
+const noteSel = document.getElementById('bassNote');
+['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].forEach(n =>
+  [1, 2, 3].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = `${n}${o}`; opt.textContent = `${n}${o}`;
+    if (n === 'C' && o === 2) opt.selected = true;
+    noteSel.appendChild(opt);
+  }));
+noteSel.onchange = () => {
+  const m = noteSel.value.match(/^([A-G]#?)(\d)$/);
+  bassNote = { name: m[1], octave: +m[2] };
+};
+
+buildGrid();
+PRESETS['Boom Bap'] && (() => {     // start with a beat already on the grid
+  const { p, bpm } = PRESETS['Boom Bap'];
+  TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+  bpmEl.value = bpm; bpmVal.textContent = bpm; syncGrid();
+})();
 </script>
 </body>
 </html>
