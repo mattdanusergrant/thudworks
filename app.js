@@ -38,7 +38,8 @@ const PRESETS = {
 let ctx, kit, master, seq;
 const pattern = {};            // key -> [bool x16]
 const muted = {};              // key -> bool
-TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
+const locked = {};             // key -> bool — locked rows are left alone by the formula
+TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; locked[t.key] = false; });
 let bassNote = { name: 'C', octave: 2 };
 let formula = null;            // compiled (x,y,i,t)=>number when formula mode is on, else null
 let formulaBar = 0;            // bar counter fed in as `t` so formulas can evolve over time
@@ -80,6 +81,17 @@ const cells = {};              // key -> [button x16]
 function buildGrid() {
   for (const t of TRACKS) {
     const row = document.createElement('div'); row.className = 'row';
+
+    const lock = document.createElement('button');
+    lock.className = 'lock'; lock.textContent = '🔓';
+    lock.title = 'Lock row — the formula won’t redraw it';
+    lock.onclick = () => {
+      locked[t.key] = !locked[t.key];
+      lock.classList.toggle('locked', locked[t.key]);
+      lock.textContent = locked[t.key] ? '🔒' : '🔓';
+    };
+    row.appendChild(lock);
+
     const name = document.createElement('button');
     name.className = 'name'; name.textContent = t.label;
     name.style.setProperty('--c', t.color);
@@ -94,8 +106,8 @@ function buildGrid() {
       c.style.setProperty('--c', t.color);
       c.onclick = () => {
         ensureAudio();
-        disengageFormula();                            // manual edit takes over from the formula
-        pattern[t.key][i] = !pattern[t.key][i];
+        if (!locked[t.key]) disengageFormula();         // editing a formula-owned row turns it off;
+        pattern[t.key][i] = !pattern[t.key][i];          // editing a locked row leaves the formula running
         c.classList.toggle('on', pattern[t.key][i]);
         if (pattern[t.key][i]) {                       // audition the hit
           const fn = kit[t.voice];
@@ -198,6 +210,7 @@ function recomputeFormula(t, draw = true) {
   if (!formula) return;
   try {
     TRACKS.forEach((tr, y) => {
+      if (locked[tr.key]) return;                      // pinned rows keep what you put there
       for (let x = 0; x < STEPS; x++) pattern[tr.key][x] = formula(x, y, y * STEPS + x, t) > 0;
     });
   } catch (e) { setFormulaError(e.message); return; }
@@ -224,11 +237,20 @@ function setFormulaError(msg) {
 
 fxEl.oninput = () => setFormula(fxEl.value);
 
-const EXAMPLES = ['(x+y)%4==0', '(x&y)==0', 'x%(y+2)==0', 'y<2 && x%4==0', 'sin(x/2+t)>0.5'];
+const EXAMPLES = [
+  ['(x+y)%4==0',     'diagonal cascade across the kit'],
+  ['(x&y)==0',       'XOR / Sierpinski sparkle'],
+  ['x%(y+2)==0',     'stacked polyrhythm — slower per row'],
+  ['y<2 && x%4==0',  'four-on-the-floor on kick + bass'],
+  ['(x*x+y)%5==0',   'quadratic scatter'],
+  ['(x>>y)&1',       'bit-shift ripple'],
+  ['sin(x/2+t)>0.5', 'a wave that drifts every bar (uses t)'],
+  ['(x+t)%(y+2)==0', 'polyrhythm that rotates each bar (uses t)'],
+];
 const fxEx = document.getElementById('fxEx');
-EXAMPLES.forEach(src => {
+EXAMPLES.forEach(([src, desc]) => {
   const b = document.createElement('button');
-  b.className = 'chip'; b.textContent = src;
+  b.className = 'chip'; b.textContent = src; b.title = desc;
   b.onclick = () => { fxEl.value = src; setFormula(src); };
   fxEx.appendChild(b);
 });

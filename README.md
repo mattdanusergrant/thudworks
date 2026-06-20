@@ -52,8 +52,13 @@ evaluated and **fires when the result is positive (or true)**:
 | `y<2 && x%4==0` | four-on-the-floor on kick + bass only |
 | `sin(x/2+t)>0.5` | a wave that drifts every bar |
 
-Editing a cell by hand, or hitting Clear / Random / a preset, hands control back to you
-and switches formula mode off.
+Editing a formula-owned cell by hand, or hitting Clear / Random / a preset, hands control
+back to you and switches formula mode off.
+
+**Lock a row** with the 🔓 button at its left edge: locked rows are left untouched by the
+formula. So you can hand-draw a kick, lock it, then run an evolving formula like
+`sin(x/2+t)>0.5` and only the *unlocked* rows get generated and re-rolled each bar. Editing
+a cell in a locked row tweaks it without turning the formula off.
 
 ## Repo layout
 
