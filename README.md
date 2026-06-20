@@ -76,10 +76,20 @@ global) work on any part; `wave` / `cutoff` / `detune` shape pitched parts. E.g.
 `{ wave: 'square', cutoff: 1200, gain: 0.4 }`.
 
 **Instruments:** `kick`, `snare`, `clap`, `hat`, `openhat`, `cowbell`, `clave`, `tom` ·
-pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck`.
+pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck` ·
+NES/chiptune: `pulse` & `pulse2` (square channels), `tri` (triangle bass).
 
-**Built-in songs** (all fully arranged): Boom Bap · Acid House · Trap · Lo-Fi ·
-Euclid Techno · Deep House · Arranged.
+### NES-style / chiptune
+
+The `pulse`, `pulse2`, and `tri` voices map to the NES sound chip's two square channels
+and triangle bass, and the noise-based drums (`hat`, `snare`) stand in for its noise channel.
+The classic chiptune trick for chords is a fast **arpeggio** on one channel — rapid notes on
+consecutive 16ths, e.g. `"C5 E5 G5 E5 C5 E5 G5 E5 …"`. See the **VGM** examples.
+
+**Built-in songs** (all fully arranged), grouped by genre:
+- **VGM** — Overworld · Boss Battle · Dungeon · Title
+- **EDM** — Acid House · Deep House · Euclid Techno · Arranged
+- **Hip-Hop** — Boom Bap · Trap · Lo-Fi
 
 ## Generate a WAV
 

@@ -102,14 +102,20 @@ downloadBtn.onclick = async () => {
   finally { rendering = false; downloadBtn.disabled = false; }
 };
 
-// example songs — load into the editor and play immediately
+// example songs, grouped by genre — each loads into the editor and plays on click
 const exBar = document.getElementById('examples');
-EXAMPLES.forEach((ex, i) => {
-  const b = document.createElement('button'); b.className = 'ex'; b.textContent = ex.name;
-  b.onclick = () => { codeEl.value = ex.code.trim(); run(); };
-  exBar.appendChild(b);
+EXAMPLES.forEach(group => {
+  const row = document.createElement('div'); row.className = 'exrow';
+  const label = document.createElement('span'); label.className = 'glabel'; label.textContent = group.group;
+  row.appendChild(label);
+  group.songs.forEach(ex => {
+    const b = document.createElement('button'); b.className = 'ex'; b.textContent = ex.name;
+    b.onclick = () => { codeEl.value = ex.code.trim(); run(); };
+    row.appendChild(b);
+  });
+  exBar.appendChild(row);
 });
 
 // boot with the first example loaded (not playing) so the screen isn't empty
-codeEl.value = EXAMPLES[0].code.trim();
+codeEl.value = EXAMPLES[0].songs[0].code.trim();
 setStatus('press ▶ Play — or pick a song above');

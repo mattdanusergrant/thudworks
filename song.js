@@ -28,6 +28,9 @@ const VOICES = {
   lead:    { fn: 'synth',     pitched: true, opts: { wave: 'sawtooth', cutoff: 3500, detune: 8 } },
   pad:     { fn: 'synth',     pitched: true, opts: { wave: 'sawtooth', cutoff: 1400, detune: 12 } },
   pluck:   { fn: 'synth',     pitched: true, opts: { wave: 'triangle', cutoff: 2400, detune: 4 } },
+  pulse:   { fn: 'synth',     pitched: true, opts: { wave: 'square',   cutoff: 7000, detune: 0 } },  // NES pulse 1
+  pulse2:  { fn: 'synth',     pitched: true, opts: { wave: 'square',   cutoff: 5000, detune: 0 } },  // NES pulse 2
+  tri:     { fn: 'synth',     pitched: true, opts: { wave: 'triangle', cutoff: 2600, detune: 0 } },  // NES triangle
 };
 export const INSTRUMENTS = Object.keys(VOICES);
 
