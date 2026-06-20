@@ -95,7 +95,27 @@ export function createKit(ctx, out) {
     o.connect(g).connect(out); o.start(t); o.stop(t + 0.24);
   }
 
-  return { kick, bass, snare, hatClosed, hatOpen, clap, cowbell, clave, tom };
+  // melodic voice — two detuned oscillators through a lowpass with an AD envelope.
+  // `dur` is the note length in seconds (set by the song engine from note ties).
+  function synth(t, gain = 1, freq = 440, opts = {}) {
+    const { wave = 'sawtooth', dur = 0.25, cutoff = 3000, detune = 6 } = opts;
+    const rel = Math.min(0.08, dur * 0.4), a = 0.006;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass';
+    f.frequency.setValueAtTime(Math.max(cutoff, 200), t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(cutoff * 0.45, 200), t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(gain, 0.0002), t + a);
+    g.gain.setValueAtTime(Math.max(gain, 0.0002), t + Math.max(dur - rel, a));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    f.connect(g).connect(out);
+    for (const d of [-detune, detune]) {
+      const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq; o.detune.value = d;
+      o.connect(f); o.start(t); o.stop(t + dur + 0.05);
+    }
+  }
+
+  return { kick, bass, snare, hatClosed, hatOpen, clap, cowbell, clave, tom, synth };
 }
 
 // note name -> frequency (equal temperament, A4 = 440)

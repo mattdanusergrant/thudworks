@@ -106,7 +106,7 @@ el('copy').onclick = async () => {
   try { await navigator.clipboard.writeText(genCode()); setStatus('copied to clipboard ✓'); }
   catch { setStatus('copy failed — select the code and copy manually', true); }
 };
-el('open').onclick = () => { localStorage.setItem('thudworks:craft', genCode()); };   // index.html reads this
+el('open').onclick = () => { localStorage.setItem('mdg:craft', genCode()); };   // index.html reads this
 
 // seed with a starter beat so the page demonstrates itself
 addPart('kick',  'C3', 'x...x...x...x...');

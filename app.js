@@ -1,133 +1,185 @@
-// THUDWORKS — app glue: a code editor that compiles to a song, transport, examples.
-import { createKit } from './synth.js';
-import { compile, SongPlayer } from './song.js';
-import { EXAMPLES } from './examples.js';
+// THUDWORKS — app glue: builds the grid, wires transport + controls, draws the playhead.
+import { createKit, noteFreq } from './synth.js';
+import { Sequencer } from './sequencer.js';
 
-let ctx, kit, master, player;
+const STEPS = 16;
 
-const codeEl = document.getElementById('code');
-const playBtn = document.getElementById('play');
-const volEl = document.getElementById('vol');
-const statusEl = document.getElementById('status');
-const downloadBtn = document.getElementById('download');
-const copyBtn = document.getElementById('copy');
-const NOOP_KIT = new Proxy({}, { get: () => () => {} });
-let rendering = false;
+// tracks (top -> bottom). `voice` names a function on the kit; `pitched` rows follow the bass note.
+const TRACKS = [
+  { key: 'kick',    label: 'Kick',     voice: 'kick',      color: '#ff4d4d' },
+  { key: 'bass',    label: '808 Bass', voice: 'bass',      color: '#ff8a3d', pitched: true },
+  { key: 'snare',   label: 'Snare',    voice: 'snare',     color: '#ffd23d' },
+  { key: 'clap',    label: 'Clap',     voice: 'clap',      color: '#a3ff3d' },
+  { key: 'hatC',    label: 'Hat',      voice: 'hatClosed', color: '#3dffd2' },
+  { key: 'hatO',    label: 'Open Hat', voice: 'hatOpen',   color: '#3dc5ff' },
+  { key: 'cowbell', label: 'Cowbell',  voice: 'cowbell',   color: '#9d8aff' },
+  { key: 'clave',   label: 'Clave',    voice: 'clave',     color: '#ff6ad5' },
+  { key: 'tom',     label: 'Tom',      voice: 'tom',       color: '#ff9db1' },
+];
 
+// preset patterns. Each string is 16 chars; 'x' = hit. Empty/missing = silent row.
+const P = s => Array.from({ length: STEPS }, (_, i) => s[i] === 'x');
+const PRESETS = {
+  'Boom Bap': { bpm: 88, p: {
+    kick:  'x.......x...x...', snare: '....x.......x...',
+    hatC:  'x.x.x.x.x.x.x.x.', bass:  'x.......x.......' } },
+  'Trap': { bpm: 140, p: {
+    kick:  'x.....x...x.....', snare: '........x.......', clap: '........x.......',
+    hatC:  'xxxxxxxxxxxxxxxx', hatO: '..........x.....', bass: 'x.....x...x.....' } },
+  'House': { bpm: 124, p: {
+    kick:  'x...x...x...x...', clap: '....x.......x...',
+    hatO:  '..x...x...x...x.', hatC: 'x.x.x.x.x.x.x.x.', bass: 'x...x...x...x...' } },
+  'Funk': { bpm: 102, p: {
+    kick:  'x..x...x..x.....', snare: '....x.......x...',
+    hatC:  'xxxxxxxxxxxxxxxx', cowbell: '....x...x...x...', bass: 'x..x...x..x.....' } },
+};
+
+// ---- state ----
+let ctx, kit, master, seq;
+const pattern = {};            // key -> [bool x16]
+const muted = {};              // key -> bool
+TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
+let bassNote = { name: 'C', octave: 2 };
+
+// ---- audio bootstrap (must happen on a user gesture) ----
 function ensureAudio() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
-  master = ctx.createGain(); master.gain.value = +volEl.value;
-  const comp = ctx.createDynamicsCompressor();            // glue + soft limit so stacks don't clip
+  master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor();       // glue + soft limit so stacks don't clip
   master.connect(comp).connect(ctx.destination);
   kit = createKit(ctx, master);
-  player = new SongPlayer(ctx, kit);
-  requestAnimationFrame(tickStatus);
+  seq = new Sequencer(ctx, triggerColumn);
+  seq.bpm = +bpmEl.value;
+  seq.swing = +swingEl.value;
+  requestAnimationFrame(drawPlayhead);
 }
 
-function setStatus(msg, error = false) {
-  statusEl.textContent = msg;
-  statusEl.classList.toggle('err', error);
+function triggerColumn(step, time) {
+  for (const t of TRACKS) {
+    if (muted[t.key] || !pattern[t.key][step]) continue;
+    const fn = kit[t.voice];
+    if (t.pitched) fn(time, 1, noteFreq(bassNote.name, bassNote.octave));
+    else fn(time, 1);
+  }
 }
 
-function stop() {
-  if (player) player.stop();
-  playBtn.textContent = '▶ Play'; playBtn.classList.remove('on');
+// ---- DOM ----
+const grid = document.getElementById('grid');
+const bpmEl = document.getElementById('bpm');
+const bpmVal = document.getElementById('bpmVal');
+const swingEl = document.getElementById('swing');
+const swingVal = document.getElementById('swingVal');
+const volEl = document.getElementById('vol');
+const playBtn = document.getElementById('play');
+const cells = {};              // key -> [button x16]
+
+function buildGrid() {
+  for (const t of TRACKS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const name = document.createElement('button');
+    name.className = 'name'; name.textContent = t.label;
+    name.style.setProperty('--c', t.color);
+    name.onclick = () => { muted[t.key] = !muted[t.key]; name.classList.toggle('muted', muted[t.key]); };
+    row.appendChild(name);
+
+    const steps = document.createElement('div'); steps.className = 'steps';
+    cells[t.key] = [];
+    for (let i = 0; i < STEPS; i++) {
+      const c = document.createElement('button');
+      c.className = 'cell' + (Math.floor(i / 4) % 2 ? ' beatB' : ' beatA');
+      c.style.setProperty('--c', t.color);
+      c.onclick = () => {
+        ensureAudio();
+        pattern[t.key][i] = !pattern[t.key][i];
+        c.classList.toggle('on', pattern[t.key][i]);
+        if (pattern[t.key][i]) {                       // audition the hit
+          const fn = kit[t.voice];
+          t.pitched ? fn(ctx.currentTime, 1, noteFreq(bassNote.name, bassNote.octave)) : fn(ctx.currentTime, 1);
+        }
+      };
+      cells[t.key].push(c); steps.appendChild(c);
+    }
+    row.appendChild(steps); grid.appendChild(row);
+  }
 }
 
-// Compile what's in the editor and start playing it. Returns true on success.
-function run() {
+function syncGrid() {
+  for (const t of TRACKS)
+    cells[t.key].forEach((c, i) => c.classList.toggle('on', pattern[t.key][i]));
+}
+
+// ---- visual playhead ----
+let lastCol = -1;
+function drawPlayhead() {
+  if (seq && seq.playing) {
+    while (seq.queue.length && seq.queue[0].time < ctx.currentTime) {
+      const col = seq.queue.shift().step;
+      if (col !== lastCol) { highlight(col); lastCol = col; }
+    }
+  }
+  requestAnimationFrame(drawPlayhead);
+}
+function highlight(col) {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  for (const t of TRACKS) cells[t.key][col]?.classList.add('playing');
+}
+function clearHighlight() {
+  document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+  lastCol = -1;
+}
+
+// ---- controls ----
+playBtn.onclick = () => {
   ensureAudio();
   if (ctx.state === 'suspended') ctx.resume();
-  player.stop();
-  let song;
-  try { song = compile(codeEl.value); }
-  catch (e) { setStatus('⚠ ' + e.message, true); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); return false; }
-  player.load(song);
-  player.start();
-  playBtn.textContent = '■ Stop'; playBtn.classList.add('on');
-  return true;
-}
-
-playBtn.onclick = () => { if (player && player.playing) stop(); else run(); };
+  if (seq.playing) { seq.stop(); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); clearHighlight(); }
+  else { seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
+};
+bpmEl.oninput = () => { bpmVal.textContent = bpmEl.value; if (seq) seq.bpm = +bpmEl.value; };
+swingEl.oninput = () => { swingVal.textContent = swingEl.value; if (seq) seq.swing = +swingEl.value; };
 volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
-copyBtn.onclick = async () => {
-  try { await navigator.clipboard.writeText(codeEl.value); setStatus('copied to clipboard ✓'); }
-  catch { setStatus('copy failed — select the code and copy manually', true); }
+
+document.getElementById('clear').onclick = () => {
+  TRACKS.forEach(t => pattern[t.key].fill(false)); syncGrid();
+};
+document.getElementById('random').onclick = () => {
+  const density = { kick: .25, snare: .12, clap: .08, hatC: .55, hatO: .12,
+                    cowbell: .1, clave: .1, tom: .08, bass: .22 };
+  TRACKS.forEach(t => pattern[t.key] = Array.from({ length: STEPS }, () => Math.random() < (density[t.key] || .2)));
+  syncGrid();
 };
 
-// live status: tempo + bar while playing
-function tickStatus() {
-  if (!rendering && player && player.playing) setStatus(`♪ ${player.bpm} bpm · bar ${player.bar()} / ${player.bars}`);
-  requestAnimationFrame(tickStatus);
-}
-
-// ---- download: render the song offline and write a .wav (no libraries) ----
-async function renderWav(song) {
-  const sr = 44100;
-  const probe = new SongPlayer({ currentTime: 0 }, NOOP_KIT); probe.load(song);   // just for songDur
-  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  const off = new OAC(2, Math.ceil((probe.songDur + 0.6) * sr), sr);              // +tail for release
-  const m = off.createGain(); m.gain.value = +volEl.value;
-  const comp = off.createDynamicsCompressor(); m.connect(comp).connect(off.destination);
-  const player2 = new SongPlayer(off, createKit(off, m)); player2.load(song);
-  for (const ev of player2.events) ev.run(ev.time);                              // schedule at absolute times
-  return bufferToWav(await off.startRendering());
-}
-
-function bufferToWav(buf) {
-  const nch = buf.numberOfChannels, sr = buf.sampleRate, n = buf.length;
-  const ab = new ArrayBuffer(44 + n * nch * 2), view = new DataView(ab);
-  const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-  str(0, 'RIFF'); view.setUint32(4, 36 + n * nch * 2, true); str(8, 'WAVE');
-  str(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, nch, true);
-  view.setUint32(24, sr, true); view.setUint32(28, sr * nch * 2, true); view.setUint16(32, nch * 2, true); view.setUint16(34, 16, true);
-  str(36, 'data'); view.setUint32(40, n * nch * 2, true);
-  const chans = []; for (let c = 0; c < nch; c++) chans.push(buf.getChannelData(c));
-  let o = 44;
-  for (let i = 0; i < n; i++) for (let c = 0; c < nch; c++) {
-    const s = Math.max(-1, Math.min(1, chans[c][i]));
-    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); o += 2;
-  }
-  return new Blob([ab], { type: 'audio/wav' });
-}
-
-downloadBtn.onclick = async () => {
-  let song;
-  try { song = compile(codeEl.value); }
-  catch (e) { setStatus('⚠ ' + e.message, true); return; }
-  rendering = true; setStatus('generating WAV…'); downloadBtn.disabled = true;
-  try {
-    const blob = await renderWav(song);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'thudworks.wav'; a.click();
-    URL.revokeObjectURL(a.href);
-    setStatus('saved thudworks.wav ✓');
-  } catch (e) { setStatus('⚠ render failed: ' + e.message, true); }
-  finally { rendering = false; downloadBtn.disabled = false; }
-};
-
-// example songs, grouped by genre — each loads into the editor and plays on click
-const exBar = document.getElementById('examples');
-EXAMPLES.forEach(group => {
-  const row = document.createElement('div'); row.className = 'exrow';
-  const label = document.createElement('span'); label.className = 'glabel'; label.textContent = group.group;
-  row.appendChild(label);
-  group.songs.forEach(ex => {
-    const b = document.createElement('button'); b.className = 'ex'; b.textContent = ex.name;
-    b.onclick = () => { codeEl.value = ex.code.trim(); run(); };
-    row.appendChild(b);
-  });
-  exBar.appendChild(row);
+// preset buttons
+const presetBar = document.getElementById('presets');
+Object.keys(PRESETS).forEach(name => {
+  const b = document.createElement('button'); b.textContent = name; b.className = 'preset';
+  b.onclick = () => {
+    const { bpm, p } = PRESETS[name];
+    TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+    bpmEl.value = bpm; bpmVal.textContent = bpm; if (seq) seq.bpm = bpm;
+    syncGrid();
+  };
+  presetBar.appendChild(b);
 });
 
-// boot: code handed over from the Code Crafter wins, else the first example
-const fromCrafter = localStorage.getItem('thudworks:craft');
-if (fromCrafter) {
-  localStorage.removeItem('thudworks:craft');
-  codeEl.value = fromCrafter;
-  setStatus('loaded from Code Crafter — press ▶ Play');
-} else {
-  codeEl.value = EXAMPLES[0].songs[0].code.trim();
-  setStatus('press ▶ Play — or pick a song above');
-}
+// bass note picker
+const noteSel = document.getElementById('bassNote');
+['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].forEach(n =>
+  [1, 2, 3].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = `${n}${o}`; opt.textContent = `${n}${o}`;
+    if (n === 'C' && o === 2) opt.selected = true;
+    noteSel.appendChild(opt);
+  }));
+noteSel.onchange = () => {
+  const m = noteSel.value.match(/^([A-G]#?)(\d)$/);
+  bassNote = { name: m[1], octave: +m[2] };
+};
+
+buildGrid();
+PRESETS['Boom Bap'] && (() => {     // start with a beat already on the grid
+  const { p, bpm } = PRESETS['Boom Bap'];
+  TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
+  bpmEl.value = bpm; bpmVal.textContent = bpm; syncGrid();
+})();

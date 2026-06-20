@@ -1,10 +1,9 @@
 # ThudWorks
 
-### write a song in code.
+### make dope grooves.
 
-A browser-based environment where you **write entire songs as code** — drums, bass,
-and melodies — and it plays them back. **Every sound is synthesized live with the Web
-Audio API**: there are no audio files to host or license. The app *is* the instrument.
+A browser-based step sequencer / beat lab. **Every sound is synthesized live with the
+Web Audio API** — there are no audio files to host or license. The app *is* the kit.
 
 ## Run it
 
@@ -20,103 +19,24 @@ python3 -m http.server 8000
 Or just open `thudworks-standalone.html` directly — it's a single-file build with
 everything inlined.
 
-## How it works
+## Features
 
-You write a song by calling `play(...)` for each part. Hit **Play** and it compiles and
-loops. Pick one of the built-in **Songs** to load it into the editor and play instantly.
-
-```js
-tempo(90)        // bpm
-swing(14)        // 0–70%, delays every other 16th
-
-play('kick',  rep("x.....x...x.....", 8))   // 1-bar pattern, repeated 8×
-play('snare', rep("....x.......x...", 8))
-play('hat',   rep("x.x.x.x.x.x.x.x.", 8))
-play('bass',  rep("C2 . . . . . . . G1 . . . . . . .", 8))
-play('pluck', rep("E4 . G4 . A4 . G4 E4 D4 . . . . . . .", 4), { gain: 0.4 })
-```
-
-**Patterns** are read one 16th-note per cell, and every part loops to fill the longest
-one (so a 1-bar drum loop repeats automatically under a 16-bar melody):
-
-- **Drums** — one character per step: `x` (or any non-`.`) = hit, `.` = rest. Spaces are
-  ignored, so you can group beats: `"x... x... x... x..."`
-- **Pitched** — whitespace-separated tokens: a note like `C4` / `F#3` / `Bb2` plays it,
-  `.` = rest, `-` = hold (tie, so a note sustains across cells). Stack notes with `+` for a
-  chord: `C4+E4+G4`.
-
-**Arrange** — the high-level way to structure a song:
-
-```js
-section('verse', {
-  kick: "x...x...x...x...",
-  bass: "C2 . . . . . . . G1 . . . . . . .",
-})
-section('chorus', {
-  kick: "x.x.x.x.x.x.x.x.",
-  pad:  ["C3+E3+G3 - - - - - - - F3+A3+C4 - - - - - - -", { gain: 0.3 }],
-})
-arrange('intro', 'verse', 'verse', 'chorus', 'verse', 'chorus')   // sequence the blocks
-```
-
-- `section(name, { instrument: pattern })` — define a reusable block. A value can be
-  `[pattern, opts]`. Each part tiles to fill the block's length (the longest part in it).
-- `arrange(...names)` — play the named sections in order; that's the whole song's structure.
-- `transpose(pattern, semitones)` — shift a pitched pattern (chords/ties pass through),
-  e.g. lift a chorus up a fourth with `transpose(theme, 5)`.
-
-**Helpers**
-- `rep(pattern, n)` — repeat a pattern `n` times
-- `seq(...parts)` — glue parts in order, e.g. a multi-bar melody `seq(barA, barB)`
-- `euclid(hits, steps[, rotate])` — an evenly-spread drum pattern (Euclidean rhythm)
-- `length(bars)` — fix the total song length (default: the longest part)
-
-**opts:** `{ gain, swing, wave, cutoff, detune }` — `gain` and `swing` (0–70, overrides the
-global) work on any part; `wave` / `cutoff` / `detune` shape pitched parts. E.g.
-`{ wave: 'square', cutoff: 1200, gain: 0.4 }`.
-
-**Instruments:** `kick`, `snare`, `clap`, `hat`, `openhat`, `cowbell`, `clave`, `tom` ·
-pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck` ·
-NES/chiptune: `pulse` & `pulse2` (square channels), `tri` (triangle bass).
-
-### NES-style / chiptune
-
-The `pulse`, `pulse2`, and `tri` voices map to the NES sound chip's two square channels
-and triangle bass, and the noise-based drums (`hat`, `snare`) stand in for its noise channel.
-The classic chiptune trick for chords is a fast **arpeggio** on one channel — rapid notes on
-consecutive 16ths, e.g. `"C5 E5 G5 E5 C5 E5 G5 E5 …"`. See the **VGM** examples.
-
-**Built-in songs** (all fully arranged), grouped by genre:
-- **VGM** — Overworld · Boss Battle · Dungeon · Title
-- **EDM** — Acid House · Deep House · Euclid Techno · Arranged
-- **Hip-Hop** — Boom Bap · Trap · Lo-Fi
-
-## Code Crafter
-
-Don't want to type? **Code Crafter** (`crafter.html`, linked from the toolbar) builds a song
-with buttons: add parts, pick an instrument per part, tap a 16-step grid, and it writes the
-`play(...)` code live. Hit **Play** to hear it, **Copy raw** to grab the code, or **Open in
-ThudWorks** to send it to the main editor and keep going (add sections, melodies, chords).
-
-The editor toolbar also has **Copy raw** (copy the current code) and **Generate WAV**.
-
-## Generate a WAV
-
-Hit **Generate WAV** and the song is rendered offline (via `OfflineAudioContext`) and saved
-as a lossless `.wav` — synthesized right in your browser, nothing fetched or uploaded (no
-server, no bandwidth). WAV keeps the project dependency-free; browsers have no built-in MP3
-encoder, so a true `.mp3` would mean bundling a JS encoder library.
+- **9 tracks** — Kick, 808 Bass, Snare, Clap, Hat, Open Hat, Cowbell, Clave, Tom
+- **16-step** grid, beat-grouped; tap a cell to program a step (it auditions on click)
+- **Transport** — Play/Stop with a lookahead scheduler (sample-tight timing), BPM, Swing, master Volume
+- **808 Bass** follows a selectable root note (C1–B3)
+- **Presets** — Boom Bap, Trap, House, Funk
+- **Clear / Random**, per-track **mute** (click a track name)
+- Mobile-friendly layout
 
 ## Repo layout
 
 | Path | What |
 |---|---|
 | `index.html` / `style.css` | markup + dark/neon theme |
-| `synth.js` | Web Audio voices — drums, 808, and a melodic synth |
-| `song.js` | the song language (compiler + pattern parser) and lookahead player |
-| `examples.js` | the built-in example songs (grouped by genre) |
-| `app.js` | editor, transport, and example wiring |
-| `crafter.html` / `crafter.js` | Code Crafter — button-driven song builder that emits code |
+| `synth.js` | Web Audio voices (ported from `gen-808-kit.py`) |
+| `sequencer.js` | lookahead-scheduler transport |
+| `app.js` | grid build, control wiring, visual playhead |
 | `thudworks-standalone.html` | single-file build (everything inlined) |
 | `gen-808-kit.py` | offline synth render of the 808 one-shot kit (pure stdlib) |
 | `gen-synth-melodic.py` | offline synth render of the melodic kit |
