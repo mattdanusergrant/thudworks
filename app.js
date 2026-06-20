@@ -9,6 +9,7 @@ const codeEl = document.getElementById('code');
 const playBtn = document.getElementById('play');
 const volEl = document.getElementById('vol');
 const statusEl = document.getElementById('status');
+const shareBtn = document.getElementById('share');
 
 function ensureAudio() {
   if (ctx) return;
@@ -62,6 +63,20 @@ EXAMPLES.forEach((ex, i) => {
   exBar.appendChild(b);
 });
 
-// boot with the first example loaded (but not playing) so the screen isn't empty
-codeEl.value = EXAMPLES[0].code.trim();
-setStatus('press ▶ Play — or pick a song above');
+// share: encode the editor's code into the URL (UTF-8-safe base64) and copy the link
+const enc = s => btoa(unescape(encodeURIComponent(s)));
+const dec = s => decodeURIComponent(escape(atob(s)));
+shareBtn.onclick = async () => {
+  const url = location.origin + location.pathname + '#s=' + enc(codeEl.value);
+  history.replaceState(null, '', url);
+  try { await navigator.clipboard.writeText(url); setStatus('link copied to clipboard ✓'); }
+  catch { setStatus('link is in the address bar — copy it to share'); }
+};
+
+// boot: a shared song in the URL wins; otherwise load the first example (not playing)
+let loaded = false;
+if (location.hash.startsWith('#s=')) {
+  try { codeEl.value = dec(location.hash.slice(3)); loaded = true; setStatus('loaded a shared song — press ▶ Play'); }
+  catch { /* malformed link — fall back to the default */ }
+}
+if (!loaded) { codeEl.value = EXAMPLES[0].code.trim(); setStatus('press ▶ Play — or pick a song above'); }

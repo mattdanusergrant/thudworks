@@ -96,4 +96,22 @@ play('pad',     rep(". . F3+A3+C4 . . . . . D#3+G3+A#3 . . . . . . .", 8),
                 { wave: 'sawtooth', cutoff: 1700, detune: 10, gain: 0.3 })
 `,
   },
+  {
+    name: 'Arranged',
+    code: `
+// ARRANGED — sections with seq(), a fixed length(), and per-part swing.
+// seq() glues parts in order; length(bars) sets the total; rep(".", n) makes n rests.
+tempo(124)
+length(16)               // 16-bar song: 4-bar intro then a 12-bar drop
+
+play('kick', seq(rep("x...x...x...x...", 4), rep("x.x.x.x.x.x.x.x.", 12)))
+play('clap', seq(rep(".", 64),                rep("....x.......x...", 12)))
+play('openhat', rep("..x...x...x...x.", 16), { swing: 33 })   // shuffled hats only
+play('bass', rep("A1 . . . A1 . . . C2 . . . E2 . . .", 16))
+
+// pad stays silent through the intro, then holds chords for the drop
+play('pad', seq(rep(".", 128),
+                rep("A3+C4+E4 - - - - - - - F3+A3+C4 - - - - - - -", 8)), { gain: 0.3 })
+`,
+  },
 ];

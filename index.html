@@ -15,6 +15,7 @@
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
+    <button id="share" class="ghost">Share</button>
     <span id="status" class="status"></span>
   </section>
 
@@ -39,9 +40,14 @@
           Stack notes with <code>+</code> for a chord: <code>C4+E4+G4</code>.</li>
       </ul>
       <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
-        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern.</p>
-      <p><strong>opts:</strong> <code>{ wave, cutoff, detune, gain }</code> — e.g.
-        <code>{ wave:'square', cutoff:1200, gain:0.4 }</code> (pitched parts).</p>
+        <code>seq(...parts)</code> glues sections in order ·
+        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern ·
+        <code>length(bars)</code> fixes the total song length (default: the longest part).</p>
+      <p><strong>opts:</strong> <code>{ gain, swing, wave, cutoff, detune }</code> —
+        <code>gain</code> and <code>swing</code> (0–70, overrides the global) work on any part;
+        <code>wave</code>/<code>cutoff</code>/<code>detune</code> shape pitched parts.</p>
+      <p><strong>Share:</strong> the Share button puts your whole song in the URL and copies
+        the link — anyone who opens it gets your code loaded.</p>
       <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
         pitched: bass (808), synth, lead, pad, pluck.</p>
     </div>

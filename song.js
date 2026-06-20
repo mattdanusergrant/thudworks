@@ -48,9 +48,10 @@ const parsePitched = str => str.trim().split(/\s+/).filter(Boolean).map(t =>
 
 // Run the user's code with the DSL helpers in scope; collect the parts.
 export function compile(code) {
-  let bpm = 120, swing = 0;
+  let bpm = 120, swing = 0, lengthBars = 0;
   const tracks = [];
   const rep = (s, n) => Array.from({ length: n }, () => s).join(' ');
+  const seq = (...parts) => parts.join(' ');                                     // glue sections in order
   const euclid = (hits, steps, rot = 0) => {                                     // even-spread rhythm
     let s = '';
     for (let i = 0; i < steps; i++) s += ((i * hits) % steps) < hits ? 'x' : '.';
@@ -58,6 +59,7 @@ export function compile(code) {
   };
   const tempo = v => { bpm = +v; };
   const swingFn = v => { swing = +v; };
+  const length = v => { lengthBars = Math.max(1, Math.floor(+v)); };             // fix total song length
   const play = (inst, pattern, opts = {}) => {
     const meta = VOICES[inst];
     if (!meta) throw new Error(`unknown instrument "${inst}" — try: ${INSTRUMENTS.join(', ')}`);
@@ -65,9 +67,11 @@ export function compile(code) {
     if (!cells.length) throw new Error(`"${inst}" pattern is empty`);
     tracks.push({ meta, cells, opts });
   };
-  new Function('tempo', 'swing', 'play', 'rep', 'euclid', code)(tempo, swingFn, play, rep, euclid);
+  new Function('tempo', 'swing', 'play', 'rep', 'euclid', 'seq', 'length', code)
+    (tempo, swingFn, play, rep, euclid, seq, length);
   if (!tracks.length) throw new Error('no play() calls — nothing to play');
-  return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)), tracks };
+  return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)),
+           cells: lengthBars * 16, tracks };                                     // cells 0 = auto (longest part)
 }
 
 export class SongPlayer {
@@ -76,16 +80,17 @@ export class SongPlayer {
   load(song) {
     this.bpm = song.bpm;
     const six = (60 / song.bpm) / 4;
-    const cells = Math.max(...song.tracks.map(t => t.cells.length));
+    const cells = song.cells || Math.max(...song.tracks.map(t => t.cells.length));
     this.six = six; this.bars = Math.ceil(cells / 16); this.songDur = cells * six;
 
     const events = [];
     for (const tr of song.tracks) {
       const n = tr.cells.length, gain = tr.opts.gain ?? 1, fn = this.kit[tr.meta.fn];
+      const swing = Math.min(70, Math.max(0, tr.opts.swing ?? song.swing));      // per-part swing override
       for (let c = 0; c < cells; c++) {
         const cell = tr.cells[c % n];
         if (!cell || cell.rest || cell.tie) continue;
-        const time = c * six + (c % 2 ? six * (song.swing / 100) : 0);
+        const time = c * six + (c % 2 ? six * (swing / 100) : 0);
         if (tr.meta.pitched) {
           let dur = 1;                                                           // extend over following ties
           while (tr.cells[(c + dur) % n] && tr.cells[(c + dur) % n].tie && c + dur < cells) dur++;

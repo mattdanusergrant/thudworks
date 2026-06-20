@@ -46,16 +46,26 @@ one (so a 1-bar drum loop repeats automatically under a 16-bar melody):
   chord: `C4+E4+G4`.
 
 **Helpers**
-- `rep(pattern, n)` — repeat a pattern `n` times (build arrangements by composing strings)
+- `rep(pattern, n)` — repeat a pattern `n` times
+- `seq(...parts)` — glue sections in order (intro, verse, chorus…), e.g.
+  `seq(rep(introBar, 4), rep(dropBar, 12))`
 - `euclid(hits, steps[, rotate])` — an evenly-spread drum pattern (Euclidean rhythm)
+- `length(bars)` — fix the total song length (default: the longest part)
 
-**opts** (pitched parts): `{ wave, cutoff, detune, gain }` —
-e.g. `{ wave: 'square', cutoff: 1200, gain: 0.4 }`.
+**opts:** `{ gain, swing, wave, cutoff, detune }` — `gain` and `swing` (0–70, overrides the
+global) work on any part; `wave` / `cutoff` / `detune` shape pitched parts. E.g.
+`{ wave: 'square', cutoff: 1200, gain: 0.4 }`.
 
 **Instruments:** `kick`, `snare`, `clap`, `hat`, `openhat`, `cowbell`, `clave`, `tom` ·
 pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck`.
 
-**Built-in songs:** Boom Bap · Acid House · Trap · Lo-Fi · Euclid Techno · Deep House.
+**Built-in songs:** Boom Bap · Acid House · Trap · Lo-Fi · Euclid Techno · Deep House · Arranged.
+
+## Share a song
+
+Hit **Share** and your entire song is encoded into the URL (`#s=…`) and the link is copied
+to your clipboard. Anyone who opens that link gets your code loaded into the editor, ready
+to play — nothing is stored on a server.
 
 ## Repo layout
 

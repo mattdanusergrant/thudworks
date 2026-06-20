@@ -40,6 +40,8 @@ button { cursor: pointer; font: inherit; border: none; border-radius: 9px; trans
   padding: 9px 20px; font-size: 15px;
 }
 .play.on { background: linear-gradient(180deg, #ff5c5c, #d23b3b); color: #2a0606; }
+.ghost { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; }
+.ghost:hover { border-color: var(--accent); color: var(--accent); }
 .plabel { color: var(--dim); font-size: 13px; }
 .ex { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; }
 .ex:hover { background: var(--accent); color: #1a0c00; }
@@ -80,6 +82,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
+    <button id="share" class="ghost">Share</button>
     <span id="status" class="status"></span>
   </section>
 
@@ -104,9 +107,14 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
           Stack notes with <code>+</code> for a chord: <code>C4+E4+G4</code>.</li>
       </ul>
       <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
-        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern.</p>
-      <p><strong>opts:</strong> <code>{ wave, cutoff, detune, gain }</code> — e.g.
-        <code>{ wave:'square', cutoff:1200, gain:0.4 }</code> (pitched parts).</p>
+        <code>seq(...parts)</code> glues sections in order ·
+        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern ·
+        <code>length(bars)</code> fixes the total song length (default: the longest part).</p>
+      <p><strong>opts:</strong> <code>{ gain, swing, wave, cutoff, detune }</code> —
+        <code>gain</code> and <code>swing</code> (0–70, overrides the global) work on any part;
+        <code>wave</code>/<code>cutoff</code>/<code>detune</code> shape pitched parts.</p>
+      <p><strong>Share:</strong> the Share button puts your whole song in the URL and copies
+        the link — anyone who opens it gets your code loaded.</p>
       <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
         pitched: bass (808), synth, lead, pad, pluck.</p>
     </div>
@@ -292,9 +300,10 @@ const parsePitched = str => str.trim().split(/\s+/).filter(Boolean).map(t =>
 
 // Run the user's code with the DSL helpers in scope; collect the parts.
 function compile(code) {
-  let bpm = 120, swing = 0;
+  let bpm = 120, swing = 0, lengthBars = 0;
   const tracks = [];
   const rep = (s, n) => Array.from({ length: n }, () => s).join(' ');
+  const seq = (...parts) => parts.join(' ');                                     // glue sections in order
   const euclid = (hits, steps, rot = 0) => {                                     // even-spread rhythm
     let s = '';
     for (let i = 0; i < steps; i++) s += ((i * hits) % steps) < hits ? 'x' : '.';
@@ -302,6 +311,7 @@ function compile(code) {
   };
   const tempo = v => { bpm = +v; };
   const swingFn = v => { swing = +v; };
+  const length = v => { lengthBars = Math.max(1, Math.floor(+v)); };             // fix total song length
   const play = (inst, pattern, opts = {}) => {
     const meta = VOICES[inst];
     if (!meta) throw new Error(`unknown instrument "${inst}" — try: ${INSTRUMENTS.join(', ')}`);
@@ -309,9 +319,11 @@ function compile(code) {
     if (!cells.length) throw new Error(`"${inst}" pattern is empty`);
     tracks.push({ meta, cells, opts });
   };
-  new Function('tempo', 'swing', 'play', 'rep', 'euclid', code)(tempo, swingFn, play, rep, euclid);
+  new Function('tempo', 'swing', 'play', 'rep', 'euclid', 'seq', 'length', code)
+    (tempo, swingFn, play, rep, euclid, seq, length);
   if (!tracks.length) throw new Error('no play() calls — nothing to play');
-  return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)), tracks };
+  return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)),
+           cells: lengthBars * 16, tracks };                                     // cells 0 = auto (longest part)
 }
 
 class SongPlayer {
@@ -320,16 +332,17 @@ class SongPlayer {
   load(song) {
     this.bpm = song.bpm;
     const six = (60 / song.bpm) / 4;
-    const cells = Math.max(...song.tracks.map(t => t.cells.length));
+    const cells = song.cells || Math.max(...song.tracks.map(t => t.cells.length));
     this.six = six; this.bars = Math.ceil(cells / 16); this.songDur = cells * six;
 
     const events = [];
     for (const tr of song.tracks) {
       const n = tr.cells.length, gain = tr.opts.gain ?? 1, fn = this.kit[tr.meta.fn];
+      const swing = Math.min(70, Math.max(0, tr.opts.swing ?? song.swing));      // per-part swing override
       for (let c = 0; c < cells; c++) {
         const cell = tr.cells[c % n];
         if (!cell || cell.rest || cell.tie) continue;
-        const time = c * six + (c % 2 ? six * (song.swing / 100) : 0);
+        const time = c * six + (c % 2 ? six * (swing / 100) : 0);
         if (tr.meta.pitched) {
           let dur = 1;                                                           // extend over following ties
           while (tr.cells[(c + dur) % n] && tr.cells[(c + dur) % n].tie && c + dur < cells) dur++;
@@ -470,6 +483,24 @@ play('pad',     rep(". . F3+A3+C4 . . . . . D#3+G3+A#3 . . . . . . .", 8),
                 { wave: 'sawtooth', cutoff: 1700, detune: 10, gain: 0.3 })
 `,
   },
+  {
+    name: 'Arranged',
+    code: `
+// ARRANGED — sections with seq(), a fixed length(), and per-part swing.
+// seq() glues parts in order; length(bars) sets the total; rep(".", n) makes n rests.
+tempo(124)
+length(16)               // 16-bar song: 4-bar intro then a 12-bar drop
+
+play('kick', seq(rep("x...x...x...x...", 4), rep("x.x.x.x.x.x.x.x.", 12)))
+play('clap', seq(rep(".", 64),                rep("....x.......x...", 12)))
+play('openhat', rep("..x...x...x...x.", 16), { swing: 33 })   // shuffled hats only
+play('bass', rep("A1 . . . A1 . . . C2 . . . E2 . . .", 16))
+
+// pad stays silent through the intro, then holds chords for the drop
+play('pad', seq(rep(".", 128),
+                rep("A3+C4+E4 - - - - - - - F3+A3+C4 - - - - - - -", 8)), { gain: 0.3 })
+`,
+  },
 ];
 // THUDWORKS — app glue: a code editor that compiles to a song, transport, examples.
 
@@ -479,6 +510,7 @@ const codeEl = document.getElementById('code');
 const playBtn = document.getElementById('play');
 const volEl = document.getElementById('vol');
 const statusEl = document.getElementById('status');
+const shareBtn = document.getElementById('share');
 
 function ensureAudio() {
   if (ctx) return;
@@ -532,9 +564,23 @@ EXAMPLES.forEach((ex, i) => {
   exBar.appendChild(b);
 });
 
-// boot with the first example loaded (but not playing) so the screen isn't empty
-codeEl.value = EXAMPLES[0].code.trim();
-setStatus('press ▶ Play — or pick a song above');
+// share: encode the editor's code into the URL (UTF-8-safe base64) and copy the link
+const enc = s => btoa(unescape(encodeURIComponent(s)));
+const dec = s => decodeURIComponent(escape(atob(s)));
+shareBtn.onclick = async () => {
+  const url = location.origin + location.pathname + '#s=' + enc(codeEl.value);
+  history.replaceState(null, '', url);
+  try { await navigator.clipboard.writeText(url); setStatus('link copied to clipboard ✓'); }
+  catch { setStatus('link is in the address bar — copy it to share'); }
+};
+
+// boot: a shared song in the URL wins; otherwise load the first example (not playing)
+let loaded = false;
+if (location.hash.startsWith('#s=')) {
+  try { codeEl.value = dec(location.hash.slice(3)); loaded = true; setStatus('loaded a shared song — press ▶ Play'); }
+  catch { /* malformed link — fall back to the default */ }
+}
+if (!loaded) { codeEl.value = EXAMPLES[0].code.trim(); setStatus('press ▶ Play — or pick a song above'); }
 </script>
 </body>
 </html>
