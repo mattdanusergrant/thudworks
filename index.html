@@ -15,7 +15,7 @@
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
-    <button id="share" class="ghost">Share</button>
+    <button id="download" class="ghost">⬇ Download WAV</button>
     <span id="status" class="status"></span>
   </section>
 
@@ -39,6 +39,10 @@
           <code>F#3</code> / <code>Bb2</code> plays it, <code>.</code> = rest, <code>-</code> = hold (tie).
           Stack notes with <code>+</code> for a chord: <code>C4+E4+G4</code>.</li>
       </ul>
+      <p><strong>Arrange:</strong> <code>section('name', { instrument: pattern })</code> defines a
+        reusable block, then <code>arrange('a', 'b', 'a', …)</code> plays blocks in order (each part
+        tiles to fill its block). <code>transpose(pattern, semitones)</code> shifts notes — handy for
+        lifting a chorus to a new key. An instrument value can be <code>[pattern, opts]</code>.</p>
       <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
         <code>seq(...parts)</code> glues sections in order ·
         <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern ·
@@ -46,8 +50,8 @@
       <p><strong>opts:</strong> <code>{ gain, swing, wave, cutoff, detune }</code> —
         <code>gain</code> and <code>swing</code> (0–70, overrides the global) work on any part;
         <code>wave</code>/<code>cutoff</code>/<code>detune</code> shape pitched parts.</p>
-      <p><strong>Share:</strong> the Share button puts your whole song in the URL and copies
-        the link — anyone who opens it gets your code loaded.</p>
+      <p><strong>Download WAV:</strong> renders your song offline to a lossless <code>.wav</code>
+        file and downloads it — synthesized in your browser, no upload.</p>
       <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
         pitched: bass (808), synth, lead, pad, pluck.</p>
     </div>

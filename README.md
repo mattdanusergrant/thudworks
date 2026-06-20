@@ -45,10 +45,29 @@ one (so a 1-bar drum loop repeats automatically under a 16-bar melody):
   `.` = rest, `-` = hold (tie, so a note sustains across cells). Stack notes with `+` for a
   chord: `C4+E4+G4`.
 
+**Arrange** — the high-level way to structure a song:
+
+```js
+section('verse', {
+  kick: "x...x...x...x...",
+  bass: "C2 . . . . . . . G1 . . . . . . .",
+})
+section('chorus', {
+  kick: "x.x.x.x.x.x.x.x.",
+  pad:  ["C3+E3+G3 - - - - - - - F3+A3+C4 - - - - - - -", { gain: 0.3 }],
+})
+arrange('intro', 'verse', 'verse', 'chorus', 'verse', 'chorus')   // sequence the blocks
+```
+
+- `section(name, { instrument: pattern })` — define a reusable block. A value can be
+  `[pattern, opts]`. Each part tiles to fill the block's length (the longest part in it).
+- `arrange(...names)` — play the named sections in order; that's the whole song's structure.
+- `transpose(pattern, semitones)` — shift a pitched pattern (chords/ties pass through),
+  e.g. lift a chorus up a fourth with `transpose(theme, 5)`.
+
 **Helpers**
 - `rep(pattern, n)` — repeat a pattern `n` times
-- `seq(...parts)` — glue sections in order (intro, verse, chorus…), e.g.
-  `seq(rep(introBar, 4), rep(dropBar, 12))`
+- `seq(...parts)` — glue parts in order, e.g. a multi-bar melody `seq(barA, barB)`
 - `euclid(hits, steps[, rotate])` — an evenly-spread drum pattern (Euclidean rhythm)
 - `length(bars)` — fix the total song length (default: the longest part)
 
@@ -59,13 +78,15 @@ global) work on any part; `wave` / `cutoff` / `detune` shape pitched parts. E.g.
 **Instruments:** `kick`, `snare`, `clap`, `hat`, `openhat`, `cowbell`, `clave`, `tom` ·
 pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck`.
 
-**Built-in songs:** Boom Bap · Acid House · Trap · Lo-Fi · Euclid Techno · Deep House · Arranged.
+**Built-in songs** (all fully arranged): Boom Bap · Acid House · Trap · Lo-Fi ·
+Euclid Techno · Deep House · Arranged.
 
-## Share a song
+## Download
 
-Hit **Share** and your entire song is encoded into the URL (`#s=…`) and the link is copied
-to your clipboard. Anyone who opens that link gets your code loaded into the editor, ready
-to play — nothing is stored on a server.
+Hit **Download WAV** and the song is rendered offline (via `OfflineAudioContext`) and saved
+as a lossless `.wav` — synthesized in your browser, nothing uploaded. WAV keeps the project
+dependency-free; browsers have no built-in MP3 encoder, so a true `.mp3` would mean bundling
+a JS encoder library.
 
 ## Repo layout
 

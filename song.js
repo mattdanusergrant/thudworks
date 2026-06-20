@@ -32,6 +32,7 @@ const VOICES = {
 export const INSTRUMENTS = Object.keys(VOICES);
 
 const FLAT = { Cb: 'B', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
+const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 function tokenFreq(tok) {
   const m = tok.match(/^([A-Ga-g])([#b]?)(-?\d)$/);
   if (!m) throw new Error(`bad note "${tok}"`);
@@ -60,15 +61,58 @@ export function compile(code) {
   const tempo = v => { bpm = +v; };
   const swingFn = v => { swing = +v; };
   const length = v => { lengthBars = Math.max(1, Math.floor(+v)); };             // fix total song length
-  const play = (inst, pattern, opts = {}) => {
+  const cellsOf = (inst, pattern) => {
     const meta = VOICES[inst];
     if (!meta) throw new Error(`unknown instrument "${inst}" — try: ${INSTRUMENTS.join(', ')}`);
-    const cells = meta.pitched ? parsePitched(pattern) : parseDrum(pattern);
-    if (!cells.length) throw new Error(`"${inst}" pattern is empty`);
-    tracks.push({ meta, cells, opts });
+    return meta.pitched ? parsePitched(pattern) : parseDrum(pattern);
   };
-  new Function('tempo', 'swing', 'play', 'rep', 'euclid', 'seq', 'length', code)
-    (tempo, swingFn, play, rep, euclid, seq, length);
+  const play = (inst, pattern, opts = {}) => {
+    const cells = cellsOf(inst, pattern);
+    if (!cells.length) throw new Error(`"${inst}" pattern is empty`);
+    tracks.push({ meta: VOICES[inst], cells, opts });
+  };
+
+  // section(name, { instrument: pattern | [pattern, opts] }) defines a reusable block;
+  // arrange(...names) plays those blocks in order, tiling each part to the block's length.
+  const sections = {};
+  const pat = v => Array.isArray(v) ? v[0] : v;
+  const section = (name, parts) => {
+    let bars = 1;
+    for (const [inst, v] of Object.entries(parts)) bars = Math.max(bars, Math.ceil(cellsOf(inst, pat(v)).length / 16));
+    sections[name] = { parts, bars };
+  };
+  const arrange = (...names) => {
+    const secs = names.map(n => { if (!sections[n]) throw new Error(`unknown section "${n}"`); return sections[n]; });
+    const used = {};
+    for (const s of secs) for (const k of Object.keys(s.parts)) used[k] = true;
+    for (const inst of Object.keys(used)) {
+      const meta = VOICES[inst]; const cells = []; let opts = {};
+      for (const s of secs) {
+        const target = s.bars * 16;
+        if (inst in s.parts) {
+          const v = s.parts[inst], cs = cellsOf(inst, pat(v));
+          if (Array.isArray(v) && v[1]) opts = { ...opts, ...v[1] };
+          for (let i = 0; i < target; i++) cells.push(cs[i % cs.length]);
+        } else {
+          for (let i = 0; i < target; i++) cells.push(meta.pitched ? { rest: true } : null);
+        }
+      }
+      tracks.push({ meta, cells, opts });
+    }
+  };
+  // transpose a pitched pattern by N semitones (chords and ties pass through)
+  const transpose = (pattern, semis) => pattern.trim().split(/\s+/).map(tok =>
+    /^[.\-_~]$/.test(tok) ? tok : tok.split('+').map(nt => {
+      const m = nt.match(/^([A-Ga-g])([#b]?)(-?\d)$/);
+      if (!m) throw new Error(`bad note "${nt}"`);
+      let name = m[1].toUpperCase() + (m[2] || '');
+      if (name.length === 2 && name[1] === 'b') name = FLAT[name] || name;
+      const abs = (+m[3]) * 12 + NAMES.indexOf(name) + (+semis);
+      return NAMES[((abs % 12) + 12) % 12] + Math.floor(abs / 12);
+    }).join('+')).join(' ');
+
+  new Function('tempo', 'swing', 'play', 'rep', 'euclid', 'seq', 'length', 'section', 'arrange', 'transpose', code)
+    (tempo, swingFn, play, rep, euclid, seq, length, section, arrange, transpose);
   if (!tracks.length) throw new Error('no play() calls — nothing to play');
   return { bpm: Math.max(20, bpm), swing: Math.min(70, Math.max(0, swing)),
            cells: lengthBars * 16, tracks };                                     // cells 0 = auto (longest part)

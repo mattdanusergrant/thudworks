@@ -9,7 +9,9 @@ const codeEl = document.getElementById('code');
 const playBtn = document.getElementById('play');
 const volEl = document.getElementById('vol');
 const statusEl = document.getElementById('status');
-const shareBtn = document.getElementById('share');
+const downloadBtn = document.getElementById('download');
+const NOOP_KIT = new Proxy({}, { get: () => () => {} });
+let rendering = false;
 
 function ensureAudio() {
   if (ctx) return;
@@ -51,9 +53,54 @@ volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
 
 // live status: tempo + bar while playing
 function tickStatus() {
-  if (player && player.playing) setStatus(`♪ ${player.bpm} bpm · bar ${player.bar()} / ${player.bars}`);
+  if (!rendering && player && player.playing) setStatus(`♪ ${player.bpm} bpm · bar ${player.bar()} / ${player.bars}`);
   requestAnimationFrame(tickStatus);
 }
+
+// ---- download: render the song offline and write a .wav (no libraries) ----
+async function renderWav(song) {
+  const sr = 44100;
+  const probe = new SongPlayer({ currentTime: 0 }, NOOP_KIT); probe.load(song);   // just for songDur
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const off = new OAC(2, Math.ceil((probe.songDur + 0.6) * sr), sr);              // +tail for release
+  const m = off.createGain(); m.gain.value = +volEl.value;
+  const comp = off.createDynamicsCompressor(); m.connect(comp).connect(off.destination);
+  const player2 = new SongPlayer(off, createKit(off, m)); player2.load(song);
+  for (const ev of player2.events) ev.run(ev.time);                              // schedule at absolute times
+  return bufferToWav(await off.startRendering());
+}
+
+function bufferToWav(buf) {
+  const nch = buf.numberOfChannels, sr = buf.sampleRate, n = buf.length;
+  const ab = new ArrayBuffer(44 + n * nch * 2), view = new DataView(ab);
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); view.setUint32(4, 36 + n * nch * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, nch, true);
+  view.setUint32(24, sr, true); view.setUint32(28, sr * nch * 2, true); view.setUint16(32, nch * 2, true); view.setUint16(34, 16, true);
+  str(36, 'data'); view.setUint32(40, n * nch * 2, true);
+  const chans = []; for (let c = 0; c < nch; c++) chans.push(buf.getChannelData(c));
+  let o = 44;
+  for (let i = 0; i < n; i++) for (let c = 0; c < nch; c++) {
+    const s = Math.max(-1, Math.min(1, chans[c][i]));
+    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); o += 2;
+  }
+  return new Blob([ab], { type: 'audio/wav' });
+}
+
+downloadBtn.onclick = async () => {
+  let song;
+  try { song = compile(codeEl.value); }
+  catch (e) { setStatus('⚠ ' + e.message, true); return; }
+  rendering = true; setStatus('rendering…'); downloadBtn.disabled = true;
+  try {
+    const blob = await renderWav(song);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'thudworks.wav'; a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus('downloaded thudworks.wav ✓');
+  } catch (e) { setStatus('⚠ render failed: ' + e.message, true); }
+  finally { rendering = false; downloadBtn.disabled = false; }
+};
 
 // example songs — load into the editor and play immediately
 const exBar = document.getElementById('examples');
@@ -63,20 +110,6 @@ EXAMPLES.forEach((ex, i) => {
   exBar.appendChild(b);
 });
 
-// share: encode the editor's code into the URL (UTF-8-safe base64) and copy the link
-const enc = s => btoa(unescape(encodeURIComponent(s)));
-const dec = s => decodeURIComponent(escape(atob(s)));
-shareBtn.onclick = async () => {
-  const url = location.origin + location.pathname + '#s=' + enc(codeEl.value);
-  history.replaceState(null, '', url);
-  try { await navigator.clipboard.writeText(url); setStatus('link copied to clipboard ✓'); }
-  catch { setStatus('link is in the address bar — copy it to share'); }
-};
-
-// boot: a shared song in the URL wins; otherwise load the first example (not playing)
-let loaded = false;
-if (location.hash.startsWith('#s=')) {
-  try { codeEl.value = dec(location.hash.slice(3)); loaded = true; setStatus('loaded a shared song — press ▶ Play'); }
-  catch { /* malformed link — fall back to the default */ }
-}
-if (!loaded) { codeEl.value = EXAMPLES[0].code.trim(); setStatus('press ▶ Play — or pick a song above'); }
+// boot with the first example loaded (not playing) so the screen isn't empty
+codeEl.value = EXAMPLES[0].code.trim();
+setStatus('press ▶ Play — or pick a song above');
