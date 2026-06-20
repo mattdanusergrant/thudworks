@@ -42,7 +42,8 @@ one (so a 1-bar drum loop repeats automatically under a 16-bar melody):
 - **Drums** — one character per step: `x` (or any non-`.`) = hit, `.` = rest. Spaces are
   ignored, so you can group beats: `"x... x... x... x..."`
 - **Pitched** — whitespace-separated tokens: a note like `C4` / `F#3` / `Bb2` plays it,
-  `.` = rest, `-` = hold (tie, so a note sustains across cells).
+  `.` = rest, `-` = hold (tie, so a note sustains across cells). Stack notes with `+` for a
+  chord: `C4+E4+G4`.
 
 **Helpers**
 - `rep(pattern, n)` — repeat a pattern `n` times (build arrangements by composing strings)
@@ -54,7 +55,7 @@ e.g. `{ wave: 'square', cutoff: 1200, gain: 0.4 }`.
 **Instruments:** `kick`, `snare`, `clap`, `hat`, `openhat`, `cowbell`, `clave`, `tom` ·
 pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck`.
 
-**Built-in songs:** Boom Bap · Acid House · Trap · Lo-Fi · Euclid Techno.
+**Built-in songs:** Boom Bap · Acid House · Trap · Lo-Fi · Euclid Techno · Deep House.
 
 ## Repo layout
 

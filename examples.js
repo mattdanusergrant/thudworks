@@ -45,8 +45,8 @@ play('hat',     rep("xxxxx.xxxxx.xx.x", 8))
 play('openhat', rep("..........x.....", 8))
 play('bass',    rep("C1 . . . . . . . C1 . D#1 . F1 . . .", 8))
 
-// sustained minor pad underneath ('-' = hold)
-play('pad',     rep("C3 - - - - - - - G#2 - - - A#2 - - -", 8), { gain: 0.3 })
+// sustained minor chords underneath ('+' stacks notes, '-' holds)
+play('pad',     rep("C3+D#3+G3 - - - - - - - G#2+C3+D#3 - - - A#2+D3+F3 - - -", 8), { gain: 0.26 })
 `,
   },
   {
@@ -78,6 +78,22 @@ play('bass',    rep("A1 . . . A1 . . . C2 . . . E2 . . .", 16),
                 { wave: 'sawtooth', cutoff: 900, detune: 4 })
 
 play('lead',    rep("A3 . . E4 . . C4 . . E4 . . D4 . . .", 8), { gain: 0.3 })
+`,
+  },
+  {
+    name: 'Deep House',
+    code: `
+// DEEP HOUSE — 122bpm chord stabs. Stack notes with '+' to make a chord.
+tempo(122)
+
+play('kick',    rep("x...x...x...x...", 16))
+play('clap',    rep("....x.......x...", 16))
+play('openhat', rep("..x...x...x...x.", 16))
+play('bass',    rep("F1 . . . F1 . . . A#1 . . . C2 . . .", 16))
+
+// Fmaj -> Ebmaj stabs on the off-beat
+play('pad',     rep(". . F3+A3+C4 . . . . . D#3+G3+A#3 . . . . . . .", 8),
+                { wave: 'sawtooth', cutoff: 1700, detune: 10, gain: 0.3 })
 `,
   },
 ];

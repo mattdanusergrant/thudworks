@@ -44,7 +44,7 @@ const parseDrum = str => [...str].filter(c => !/\s/.test(c)).map(c => (c === '.'
 const parsePitched = str => str.trim().split(/\s+/).filter(Boolean).map(t =>
   (t === '.' || t === '_') ? { rest: true }
   : (t === '-' || t === '~') ? { tie: true }
-  : { freq: tokenFreq(t) });
+  : { freqs: t.split('+').map(tokenFreq) });                                     // "C4+E4+G4" = a chord
 
 // Run the user's code with the DSL helpers in scope; collect the parts.
 export function compile(code) {
@@ -90,7 +90,8 @@ export class SongPlayer {
           let dur = 1;                                                           // extend over following ties
           while (tr.cells[(c + dur) % n] && tr.cells[(c + dur) % n].tie && c + dur < cells) dur++;
           const opts = { ...(tr.meta.opts || {}), ...tr.opts, dur: dur * six * 0.92 };
-          events.push({ time, run: when => fn(when, gain, cell.freq, opts) });
+          const vg = gain / Math.sqrt(cell.freqs.length);                        // keep a chord's loudness in check
+          for (const freq of cell.freqs) events.push({ time, run: when => fn(when, vg, freq, opts) });
         } else {
           events.push({ time, run: when => fn(when, gain * cell.vel) });
         }

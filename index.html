@@ -35,7 +35,8 @@
         <li><strong>Drums</strong> — one character per step: <code>x</code> = hit, <code>.</code> = rest.
           Spaces are ignored, so you can group beats: <code>"x... x... x... x..."</code></li>
         <li><strong>Pitched</strong> — space-separated tokens: a note like <code>C4</code> /
-          <code>F#3</code> / <code>Bb2</code> plays it, <code>.</code> = rest, <code>-</code> = hold (tie).</li>
+          <code>F#3</code> / <code>Bb2</code> plays it, <code>.</code> = rest, <code>-</code> = hold (tie).
+          Stack notes with <code>+</code> for a chord: <code>C4+E4+G4</code>.</li>
       </ul>
       <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
         <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern.</p>
