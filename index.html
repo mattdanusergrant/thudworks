@@ -3,41 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>THUDWORKS — make dope grooves</title>
+  <title>THUDWORKS — code your songs</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>THUDWORKS</h1>
-    <p class="tag">make dope grooves.</p>
+    <p class="tag">write a song in code.</p>
   </header>
 
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
-    <label>BPM <input id="bpm" type="range" min="60" max="180" value="88" /><span id="bpmVal">88</span></label>
-    <label>Swing <input id="swing" type="range" min="0" max="60" value="0" /><span id="swingVal">0</span>%</label>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
-    <label>Bass <select id="bassNote"></select></label>
-    <button id="clear" class="ghost">Clear</button>
-    <button id="random" class="ghost">Random</button>
+    <span id="status" class="status"></span>
   </section>
 
-  <section id="presets" class="presets"><span class="plabel">Presets:</span></section>
+  <section id="examples" class="examples"><span class="plabel">Songs:</span></section>
 
-  <section id="formula" class="formula">
-    <label class="fxlabel">ƒ(x,y,t)
-      <input id="fx" type="text" spellcheck="false" autocomplete="off"
-             placeholder="type math — e.g. (x+y)%4==0" />
-    </label>
-    <span id="fxErr" class="fxerr"></span>
-    <span class="plabel">x=step · y=row (0=top) · t=bar · fires when &gt;0</span>
-    <span id="fxEx" class="fxex"></span>
-  </section>
+  <main class="editor">
+    <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"
+              wrap="off" aria-label="song code"></textarea>
+  </main>
 
-  <main id="grid" class="grid"></main>
+  <details class="cheat">
+    <summary>How the code works</summary>
+    <div class="cheatbody">
+      <p><code>play(instrument, pattern, opts?)</code> adds a part. <code>tempo(bpm)</code> and
+      <code>swing(0–70)</code> set the clock. Every part loops to fill the longest one.</p>
+      <p><strong>Patterns</strong> read one 16th-note per cell:</p>
+      <ul>
+        <li><strong>Drums</strong> — one character per step: <code>x</code> = hit, <code>.</code> = rest.
+          Spaces are ignored, so you can group beats: <code>"x... x... x... x..."</code></li>
+        <li><strong>Pitched</strong> — space-separated tokens: a note like <code>C4</code> /
+          <code>F#3</code> / <code>Bb2</code> plays it, <code>.</code> = rest, <code>-</code> = hold (tie).</li>
+      </ul>
+      <p><strong>Helpers:</strong> <code>rep(pattern, n)</code> repeats a pattern n times ·
+        <code>euclid(hits, steps[, rotate])</code> makes an evenly-spread drum pattern.</p>
+      <p><strong>opts:</strong> <code>{ wave, cutoff, detune, gain }</code> — e.g.
+        <code>{ wave:'square', cutoff:1200, gain:0.4 }</code> (pitched parts).</p>
+      <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
+        pitched: bass (808), synth, lead, pad, pluck.</p>
+    </div>
+  </details>
 
   <footer>
-    <span>Every sound is synthesized live in your browser — no samples, no licensing. Tap a cell to program a step, hit Play.</span>
+    <span>Every sound is synthesized live in your browser — no samples, no licensing.
+      Edit the code, hit Play. Pick a song above to start.</span>
   </footer>
 
   <script type="module" src="app.js"></script>

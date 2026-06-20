@@ -19,7 +19,7 @@ def strip_module(js):
     return "\n".join(out)
 
 css = read('style.css')
-js = "\n".join(strip_module(read(f)) for f in ('synth.js', 'sequencer.js', 'app.js'))
+js = "\n".join(strip_module(read(f)) for f in ('synth.js', 'song.js', 'examples.js', 'app.js'))
 
 html = read('index.html')
 html = html.replace('<link rel="stylesheet" href="style.css" />', f'<style>\n{css}\n</style>')
