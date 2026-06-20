@@ -35,6 +35,25 @@ button { cursor: pointer; font: inherit; border: none; border-radius: 9px; trans
 .play.on { background: linear-gradient(180deg, #ff5c5c, #d23b3b); color: #2a0606; }
 .ghost { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; }
 .ghost:hover { border-color: var(--accent); color: var(--accent); }
+.linkish { text-decoration: none; display: inline-block; }
+
+/* Code Crafter */
+.parts { max-width: 940px; margin: 0 auto; }
+.craft-part {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 12px; margin: 0 auto 8px;
+}
+.craft-steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; flex: 1; min-width: 240px; }
+.cstep { aspect-ratio: 1; min-width: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); }
+.cstep.beat { background: #23273a; }
+.cstep:hover { border-color: var(--accent); }
+.cstep.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px -1px var(--accent); }
+.craft-actions { max-width: 940px; margin: 4px auto 14px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.codeout { max-width: 940px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.codehdr { display: flex; gap: 8px; align-items: center; color: var(--dim); font-size: 13px; margin-bottom: 8px; }
+.codehdr > :nth-child(2) { margin-left: auto; }
+.codeprev { margin: 0; background: #0e1018; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: var(--ink); font: 13px/1.6 var(--mono); white-space: pre; overflow-x: auto; min-height: 2em; }
 .plabel { color: var(--dim); font-size: 13px; }
 .examples { flex-direction: column; gap: 8px; }
 .exrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }

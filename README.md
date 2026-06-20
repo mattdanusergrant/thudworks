@@ -91,6 +91,15 @@ consecutive 16ths, e.g. `"C5 E5 G5 E5 C5 E5 G5 E5 …"`. See the **VGM** example
 - **EDM** — Acid House · Deep House · Euclid Techno · Arranged
 - **Hip-Hop** — Boom Bap · Trap · Lo-Fi
 
+## Code Crafter
+
+Don't want to type? **Code Crafter** (`crafter.html`, linked from the toolbar) builds a song
+with buttons: add parts, pick an instrument per part, tap a 16-step grid, and it writes the
+`play(...)` code live. Hit **Play** to hear it, **Copy raw** to grab the code, or **Open in
+ThudWorks** to send it to the main editor and keep going (add sections, melodies, chords).
+
+The editor toolbar also has **Copy raw** (copy the current code) and **Generate WAV**.
+
 ## Generate a WAV
 
 Hit **Generate WAV** and the song is rendered offline (via `OfflineAudioContext`) and saved
@@ -105,8 +114,9 @@ encoder, so a true `.mp3` would mean bundling a JS encoder library.
 | `index.html` / `style.css` | markup + dark/neon theme |
 | `synth.js` | Web Audio voices — drums, 808, and a melodic synth |
 | `song.js` | the song language (compiler + pattern parser) and lookahead player |
-| `examples.js` | the built-in example songs |
+| `examples.js` | the built-in example songs (grouped by genre) |
 | `app.js` | editor, transport, and example wiring |
+| `crafter.html` / `crafter.js` | Code Crafter — button-driven song builder that emits code |
 | `thudworks-standalone.html` | single-file build (everything inlined) |
 | `gen-808-kit.py` | offline synth render of the 808 one-shot kit (pure stdlib) |
 | `gen-synth-melodic.py` | offline synth render of the melodic kit |

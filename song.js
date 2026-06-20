@@ -33,6 +33,7 @@ const VOICES = {
   tri:     { fn: 'synth',     pitched: true, opts: { wave: 'triangle', cutoff: 2600, detune: 0 } },  // NES triangle
 };
 export const INSTRUMENTS = Object.keys(VOICES);
+export const PITCHED = INSTRUMENTS.filter(k => VOICES[k].pitched);   // need a note, not just 'x'
 
 const FLAT = { Cb: 'B', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];

@@ -10,6 +10,7 @@ const playBtn = document.getElementById('play');
 const volEl = document.getElementById('vol');
 const statusEl = document.getElementById('status');
 const downloadBtn = document.getElementById('download');
+const copyBtn = document.getElementById('copy');
 const NOOP_KIT = new Proxy({}, { get: () => () => {} });
 let rendering = false;
 
@@ -50,6 +51,10 @@ function run() {
 
 playBtn.onclick = () => { if (player && player.playing) stop(); else run(); };
 volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
+copyBtn.onclick = async () => {
+  try { await navigator.clipboard.writeText(codeEl.value); setStatus('copied to clipboard ✓'); }
+  catch { setStatus('copy failed — select the code and copy manually', true); }
+};
 
 // live status: tempo + bar while playing
 function tickStatus() {
@@ -116,6 +121,13 @@ EXAMPLES.forEach(group => {
   exBar.appendChild(row);
 });
 
-// boot with the first example loaded (not playing) so the screen isn't empty
-codeEl.value = EXAMPLES[0].songs[0].code.trim();
-setStatus('press ▶ Play — or pick a song above');
+// boot: code handed over from the Code Crafter wins, else the first example
+const fromCrafter = localStorage.getItem('thudworks:craft');
+if (fromCrafter) {
+  localStorage.removeItem('thudworks:craft');
+  codeEl.value = fromCrafter;
+  setStatus('loaded from Code Crafter — press ▶ Play');
+} else {
+  codeEl.value = EXAMPLES[0].songs[0].code.trim();
+  setStatus('press ▶ Play — or pick a song above');
+}
