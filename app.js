@@ -40,6 +40,8 @@ const pattern = {};            // key -> [bool x16]
 const muted = {};              // key -> bool
 TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
 let bassNote = { name: 'C', octave: 2 };
+let formula = null;            // compiled (x,y,i,t)=>number when formula mode is on, else null
+let formulaBar = 0;            // bar counter fed in as `t` so formulas can evolve over time
 
 // ---- audio bootstrap (must happen on a user gesture) ----
 function ensureAudio() {
@@ -56,6 +58,7 @@ function ensureAudio() {
 }
 
 function triggerColumn(step, time) {
+  if (formula && step === 0) { recomputeFormula(formulaBar); formulaBar++; }   // evolve each bar
   for (const t of TRACKS) {
     if (muted[t.key] || !pattern[t.key][step]) continue;
     const fn = kit[t.voice];
@@ -91,6 +94,7 @@ function buildGrid() {
       c.style.setProperty('--c', t.color);
       c.onclick = () => {
         ensureAudio();
+        disengageFormula();                            // manual edit takes over from the formula
         pattern[t.key][i] = !pattern[t.key][i];
         c.classList.toggle('on', pattern[t.key][i]);
         if (pattern[t.key][i]) {                       // audition the hit
@@ -134,16 +138,18 @@ playBtn.onclick = () => {
   ensureAudio();
   if (ctx.state === 'suspended') ctx.resume();
   if (seq.playing) { seq.stop(); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); clearHighlight(); }
-  else { seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
+  else { formulaBar = 0; seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
 };
 bpmEl.oninput = () => { bpmVal.textContent = bpmEl.value; if (seq) seq.bpm = +bpmEl.value; };
 swingEl.oninput = () => { swingVal.textContent = swingEl.value; if (seq) seq.swing = +swingEl.value; };
 volEl.oninput = () => { if (master) master.gain.value = +volEl.value; };
 
 document.getElementById('clear').onclick = () => {
+  disengageFormula();
   TRACKS.forEach(t => pattern[t.key].fill(false)); syncGrid();
 };
 document.getElementById('random').onclick = () => {
+  disengageFormula();
   const density = { kick: .25, snare: .12, clap: .08, hatC: .55, hatO: .12,
                     cowbell: .1, clave: .1, tom: .08, bass: .22 };
   TRACKS.forEach(t => pattern[t.key] = Array.from({ length: STEPS }, () => Math.random() < (density[t.key] || .2)));
@@ -155,6 +161,7 @@ const presetBar = document.getElementById('presets');
 Object.keys(PRESETS).forEach(name => {
   const b = document.createElement('button'); b.textContent = name; b.className = 'preset';
   b.onclick = () => {
+    disengageFormula();
     const { bpm, p } = PRESETS[name];
     TRACKS.forEach(t => pattern[t.key] = p[t.key] ? P(p[t.key]) : Array(STEPS).fill(false));
     bpmEl.value = bpm; bpmVal.textContent = bpm; if (seq) seq.bpm = bpm;
@@ -176,6 +183,55 @@ noteSel.onchange = () => {
   const m = noteSel.value.match(/^([A-G]#?)(\d)$/);
   bassNote = { name: m[1], octave: +m[2] };
 };
+
+// ---- formula mode (tixy-style: type math, it draws the beat) ----
+// Each cell evaluates ƒ with x = step (0-15), y = row (0 = top track, Kick),
+// i = y*16+x, t = bar counter. A cell fires when the result is positive/true.
+// Math is in scope, so `sin`, `floor`, `PI` etc. work bare. Formulas that use
+// `t` evolve every bar while playing; ones that don't stay put.
+const fxEl = document.getElementById('fx');
+const fxErr = document.getElementById('fxErr');
+
+const compileFormula = src => new Function('x', 'y', 'i', 't', 'with (Math) { return (' + src + '); }');
+
+function recomputeFormula(t, draw = true) {
+  if (!formula) return;
+  try {
+    TRACKS.forEach((tr, y) => {
+      for (let x = 0; x < STEPS; x++) pattern[tr.key][x] = formula(x, y, y * STEPS + x, t) > 0;
+    });
+  } catch (e) { setFormulaError(e.message); return; }
+  if (draw) syncGrid();
+}
+
+function setFormula(src) {
+  src = src.trim();
+  if (!src) { disengageFormula(); return; }
+  let fn;
+  try { fn = compileFormula(src); fn(0, 0, 0, 0); }   // compile + smoke-test before committing
+  catch (e) { setFormulaError(e.message); return; }
+  formula = fn; formulaBar = 0; setFormulaError('');
+  recomputeFormula(0);
+}
+
+function disengageFormula() { formula = null; setFormulaError(''); }
+
+function setFormulaError(msg) {
+  fxErr.textContent = msg ? '⚠' : '';
+  fxEl.classList.toggle('err', !!msg);
+  fxEl.title = msg || '';
+}
+
+fxEl.oninput = () => setFormula(fxEl.value);
+
+const EXAMPLES = ['(x+y)%4==0', '(x&y)==0', 'x%(y+2)==0', 'y<2 && x%4==0', 'sin(x/2+t)>0.5'];
+const fxEx = document.getElementById('fxEx');
+EXAMPLES.forEach(src => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = src;
+  b.onclick = () => { fxEl.value = src; setFormula(src); };
+  fxEx.appendChild(b);
+});
 
 buildGrid();
 PRESETS['Boom Bap'] && (() => {     // start with a beat already on the grid

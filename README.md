@@ -27,7 +27,33 @@ everything inlined.
 - **808 Bass** follows a selectable root note (C1–B3)
 - **Presets** — Boom Bap, Trap, House, Funk
 - **Clear / Random**, per-track **mute** (click a track name)
+- **Formula mode** — type math, it draws the beat (see below)
 - Mobile-friendly layout
+
+## Formula mode
+
+A [tixy](https://tixy.land)-style toy, but for rhythm instead of pixels. Type a math
+expression in the `ƒ(x,y,t)` box and it fills the grid live as you type. Each cell is
+evaluated and **fires when the result is positive (or true)**:
+
+- `x` — step, 0–15 (column)
+- `y` — row, 0–8 (0 = top track, Kick)
+- `i` — flat index, `y*16 + x`
+- `t` — bar counter; advances every bar while playing
+
+`Math` is in scope, so `sin`, `floor`, `PI` etc. work bare. Formulas that reference `t`
+**evolve every bar** (generative grooves); ones that don't stay put. A few to try:
+
+| Formula | What you get |
+|---|---|
+| `(x+y)%4==0` | diagonal cascade across the kit |
+| `(x&y)==0` | XOR / Sierpinski sparkle |
+| `x%(y+2)==0` | stacked polyrhythm, slower per row |
+| `y<2 && x%4==0` | four-on-the-floor on kick + bass only |
+| `sin(x/2+t)>0.5` | a wave that drifts every bar |
+
+Editing a cell by hand, or hitting Clear / Random / a preset, hands control back to you
+and switches formula mode off.
 
 ## Repo layout
 

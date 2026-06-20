@@ -38,6 +38,27 @@ button { cursor: pointer; font: inherit; border: none; border-radius: 9px; trans
 .preset { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 7px 14px; }
 .preset:hover { background: var(--accent); color: #1a0c00; }
 
+.formula {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 16px; margin: 0 auto 12px; max-width: 980px;
+}
+.fxlabel { display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; }
+#fx {
+  background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 10px; min-width: 230px;
+  font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+#fx:focus { outline: none; border-color: var(--accent); }
+#fx.err { border-color: #ff5c5c; }
+.fxerr { color: #ff5c5c; min-width: 12px; }
+.fxex { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--panel2); color: var(--dim); border: 1px solid var(--line); border-radius: 7px;
+  padding: 5px 9px; font: 12px ui-monospace, Menlo, monospace;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
 .grid { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 7px; }
 .row { display: flex; gap: 10px; align-items: center; }
 .name {
