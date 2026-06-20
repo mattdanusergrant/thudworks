@@ -81,12 +81,12 @@ pitched: `bass` (808 sub), `synth`, `lead`, `pad`, `pluck`.
 **Built-in songs** (all fully arranged): Boom Bap · Acid House · Trap · Lo-Fi ·
 Euclid Techno · Deep House · Arranged.
 
-## Download
+## Generate a WAV
 
-Hit **Download WAV** and the song is rendered offline (via `OfflineAudioContext`) and saved
-as a lossless `.wav` — synthesized in your browser, nothing uploaded. WAV keeps the project
-dependency-free; browsers have no built-in MP3 encoder, so a true `.mp3` would mean bundling
-a JS encoder library.
+Hit **Generate WAV** and the song is rendered offline (via `OfflineAudioContext`) and saved
+as a lossless `.wav` — synthesized right in your browser, nothing fetched or uploaded (no
+server, no bandwidth). WAV keeps the project dependency-free; browsers have no built-in MP3
+encoder, so a true `.mp3` would mean bundling a JS encoder library.
 
 ## Repo layout
 

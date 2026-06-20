@@ -82,7 +82,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
   <section class="transport">
     <button id="play" class="play">▶ Play</button>
     <label>Vol <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" /></label>
-    <button id="download" class="ghost">⬇ Download WAV</button>
+    <button id="download" class="ghost">Generate WAV</button>
     <span id="status" class="status"></span>
   </section>
 
@@ -117,8 +117,8 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
       <p><strong>opts:</strong> <code>{ gain, swing, wave, cutoff, detune }</code> —
         <code>gain</code> and <code>swing</code> (0–70, overrides the global) work on any part;
         <code>wave</code>/<code>cutoff</code>/<code>detune</code> shape pitched parts.</p>
-      <p><strong>Download WAV:</strong> renders your song offline to a lossless <code>.wav</code>
-        file and downloads it — synthesized in your browser, no upload.</p>
+      <p><strong>Generate WAV:</strong> renders your song offline to a lossless <code>.wav</code>
+        and saves it to your device — synthesized right in your browser, nothing fetched or uploaded.</p>
       <p><strong>Instruments:</strong> kick, snare, clap, hat, openhat, cowbell, clave, tom ·
         pitched: bass (808), synth, lead, pad, pluck.</p>
     </div>
@@ -731,13 +731,13 @@ downloadBtn.onclick = async () => {
   let song;
   try { song = compile(codeEl.value); }
   catch (e) { setStatus('⚠ ' + e.message, true); return; }
-  rendering = true; setStatus('rendering…'); downloadBtn.disabled = true;
+  rendering = true; setStatus('generating WAV…'); downloadBtn.disabled = true;
   try {
     const blob = await renderWav(song);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'thudworks.wav'; a.click();
     URL.revokeObjectURL(a.href);
-    setStatus('downloaded thudworks.wav ✓');
+    setStatus('saved thudworks.wav ✓');
   } catch (e) { setStatus('⚠ render failed: ' + e.message, true); }
   finally { rendering = false; downloadBtn.disabled = false; }
 };

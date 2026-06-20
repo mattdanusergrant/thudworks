@@ -91,13 +91,13 @@ downloadBtn.onclick = async () => {
   let song;
   try { song = compile(codeEl.value); }
   catch (e) { setStatus('⚠ ' + e.message, true); return; }
-  rendering = true; setStatus('rendering…'); downloadBtn.disabled = true;
+  rendering = true; setStatus('generating WAV…'); downloadBtn.disabled = true;
   try {
     const blob = await renderWav(song);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'thudworks.wav'; a.click();
     URL.revokeObjectURL(a.href);
-    setStatus('downloaded thudworks.wav ✓');
+    setStatus('saved thudworks.wav ✓');
   } catch (e) { setStatus('⚠ render failed: ' + e.message, true); }
   finally { rendering = false; downloadBtn.disabled = false; }
 };
