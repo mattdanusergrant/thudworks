@@ -64,6 +64,33 @@ button { cursor: pointer; font: inherit; border: none; border-radius: 9px; trans
 .cell.playing { outline: 2px solid #fff; outline-offset: -2px; }
 .cell.on.playing { box-shadow: 0 0 16px 1px var(--c); }
 
+/* loops + arrangement */
+.loopbar, .arrangebar {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 16px; margin: 12px auto 0; max-width: 980px;
+}
+.play2 {
+  background: linear-gradient(180deg, #3dc5ff, #2f86c5); color: #03121f; font-weight: 800;
+  padding: 9px 18px; font-size: 15px;
+}
+.play2.on { background: linear-gradient(180deg, #ff5c5c, #d23b3b); color: #2a0606; }
+.tray, .timeline { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 200px; align-items: center; }
+.timeline { border: 1px dashed var(--line); border-radius: 10px; padding: 6px 8px; min-height: 44px; }
+.timeline.over { border-color: var(--accent); background: #1a1d2b; }
+.hint { color: var(--dim); font-size: 12px; font-style: italic; }
+.loopchip, .slot {
+  display: inline-flex; align-items: center; gap: 4px; cursor: grab; user-select: none;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 9px;
+  padding: 6px 4px 6px 10px; font-size: 13px; color: var(--ink);
+}
+.loopchip:hover, .slot:hover { border-color: var(--accent); }
+.loopchip .lc-name { cursor: pointer; }
+.slot.over { border-color: var(--accent); }
+.slot.playing { border-color: #fff; box-shadow: 0 0 12px -2px #fff; }
+.lc-x { background: transparent; color: var(--dim); border: none; font-size: 15px; line-height: 1; padding: 0 5px; cursor: pointer; }
+.lc-x:hover { color: #ff5c5c; }
+
 footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22px; }
 
 @media (max-width: 620px) {
@@ -93,6 +120,19 @@ footer { text-align: center; color: var(--dim); font-size: 12px; margin-top: 22p
   <section id="presets" class="presets"><span class="plabel">Presets:</span></section>
 
   <main id="grid" class="grid"></main>
+
+  <section id="loops" class="loopbar">
+    <button id="saveLoop" class="ghost">+ Save loop</button>
+    <span class="plabel">Loops:</span>
+    <div id="loopTray" class="tray"></div>
+  </section>
+
+  <section id="arrange" class="arrangebar">
+    <button id="playArr" class="play2">▶ Play Arrangement</button>
+    <button id="clearArr" class="ghost">Clear</button>
+    <span class="plabel">Arrangement:</span>
+    <div id="arrTimeline" class="timeline"></div>
+  </section>
 
   <footer>
     <span>Every sound is synthesized live in your browser — no samples, no licensing. Tap a cell to program a step, hit Play.</span>
@@ -293,6 +333,16 @@ const muted = {};              // key -> bool
 TRACKS.forEach(t => { pattern[t.key] = Array(STEPS).fill(false); muted[t.key] = false; });
 let bassNote = { name: 'C', octave: 2 };
 
+// ---- loops + arrangement ----
+let loops = [];                // { id, name, pattern:{key:bool[16]}, bassNote }
+let arrangement = [];          // ordered list of loop ids
+let nextLoopId = 1;
+let mode = 'grid';             // 'grid' = live grid · 'arrange' = play the arrangement
+let arrIndex = 0;              // next arrangement slot to play
+let currentArrLoop = null;     // loop sounding this bar (arrange mode)
+const arrQueue = [];           // {slot, time} for the arrangement playhead
+let drag = null;               // active drag payload: { from:'tray'|'arr', id, index }
+
 // ---- audio bootstrap (must happen on a user gesture) ----
 function ensureAudio() {
   if (ctx) return;
@@ -307,13 +357,30 @@ function ensureAudio() {
   requestAnimationFrame(drawPlayhead);
 }
 
-function triggerColumn(step, time) {
+function playColumn(pat, bn, step, time) {
   for (const t of TRACKS) {
-    if (muted[t.key] || !pattern[t.key][step]) continue;
+    if (muted[t.key] || !pat[t.key][step]) continue;
     const fn = kit[t.voice];
-    if (t.pitched) fn(time, 1, noteFreq(bassNote.name, bassNote.octave));
+    if (t.pitched) fn(time, 1, noteFreq(bn.name, bn.octave));
     else fn(time, 1);
   }
+}
+
+function triggerColumn(step, time) {
+  if (mode === 'arrange') {
+    if (step === 0) advanceArrangement(time);          // swap to the next loop each bar
+    if (currentArrLoop) playColumn(currentArrLoop.pattern, currentArrLoop.bassNote, step, time);
+  } else {
+    playColumn(pattern, bassNote, step, time);
+  }
+}
+
+function advanceArrangement(time) {
+  if (!arrangement.length) { currentArrLoop = null; return; }
+  const slot = arrIndex % arrangement.length;
+  currentArrLoop = loops.find(l => l.id === arrangement[slot]) || null;
+  arrQueue.push({ slot, time });
+  arrIndex = (slot + 1) % arrangement.length;
 }
 
 // ---- DOM ----
@@ -369,6 +436,9 @@ function drawPlayhead() {
       const col = seq.queue.shift().step;
       if (col !== lastCol) { highlight(col); lastCol = col; }
     }
+    while (arrQueue.length && arrQueue[0].time < ctx.currentTime) {
+      highlightArrSlot(arrQueue.shift().slot);
+    }
   }
   requestAnimationFrame(drawPlayhead);
 }
@@ -382,11 +452,19 @@ function clearHighlight() {
 }
 
 // ---- controls ----
+function stopPlayback() {
+  if (seq) seq.stop();
+  playBtn.textContent = '▶ Play'; playBtn.classList.remove('on');
+  playArrBtn.textContent = '▶ Play Arrangement'; playArrBtn.classList.remove('on');
+  clearHighlight(); clearArrHighlight();
+}
 playBtn.onclick = () => {
   ensureAudio();
   if (ctx.state === 'suspended') ctx.resume();
-  if (seq.playing) { seq.stop(); playBtn.textContent = '▶ Play'; playBtn.classList.remove('on'); clearHighlight(); }
-  else { seq.start(); playBtn.textContent = '■ Stop'; playBtn.classList.add('on'); }
+  if (seq.playing && mode === 'grid') { stopPlayback(); return; }
+  stopPlayback();                                      // (also stops the arrangement if it was running)
+  mode = 'grid'; seq.start();
+  playBtn.textContent = '■ Stop'; playBtn.classList.add('on');
 };
 bpmEl.oninput = () => { bpmVal.textContent = bpmEl.value; if (seq) seq.bpm = +bpmEl.value; };
 swingEl.oninput = () => { swingVal.textContent = swingEl.value; if (seq) seq.swing = +swingEl.value; };
@@ -428,6 +506,124 @@ noteSel.onchange = () => {
   const m = noteSel.value.match(/^([A-G]#?)(\d)$/);
   bassNote = { name: m[1], octave: +m[2] };
 };
+
+// ---- loops + arrangement UI ----
+const saveLoopBtn = document.getElementById('saveLoop');
+const loopTray = document.getElementById('loopTray');
+const arrTimeline = document.getElementById('arrTimeline');
+const playArrBtn = document.getElementById('playArr');
+const clearArrBtn = document.getElementById('clearArr');
+
+const persist = () => {
+  try { localStorage.setItem('thudworks:loops', JSON.stringify({ loops, arrangement, nextLoopId })); } catch {}
+};
+
+saveLoopBtn.onclick = () => {                           // snapshot the current grid as a loop
+  const p = {}; TRACKS.forEach(t => p[t.key] = pattern[t.key].slice());
+  loops.push({ id: nextLoopId++, name: 'Loop ' + (loops.length + 1), pattern: p, bassNote: { ...bassNote } });
+  renderTray(); persist();
+};
+
+function loadLoopToGrid(loop) {                         // click a loop to bring it back onto the grid
+  TRACKS.forEach(t => pattern[t.key] = loop.pattern[t.key].slice());
+  bassNote = { ...loop.bassNote }; noteSel.value = bassNote.name + bassNote.octave;
+  syncGrid();
+}
+function deleteLoop(id) {
+  loops = loops.filter(l => l.id !== id);
+  arrangement = arrangement.filter(x => x !== id);
+  renderTray(); renderArrangement(); persist();
+}
+function renameLoop(loop) {
+  const n = prompt('Rename loop', loop.name);
+  if (n && n.trim()) { loop.name = n.trim(); renderTray(); renderArrangement(); persist(); }
+}
+
+function renderTray() {
+  loopTray.innerHTML = '';
+  if (!loops.length) { loopTray.innerHTML = '<span class="hint">save the grid to make a loop →</span>'; return; }
+  loops.forEach(loop => {
+    const chip = document.createElement('div'); chip.className = 'loopchip'; chip.draggable = true;
+    const lbl = document.createElement('span'); lbl.className = 'lc-name'; lbl.textContent = loop.name;
+    lbl.title = 'click: load to grid · double-click: rename · drag: add to arrangement';
+    lbl.onclick = () => loadLoopToGrid(loop);
+    lbl.ondblclick = () => renameLoop(loop);
+    chip.appendChild(lbl);
+    const x = document.createElement('button'); x.className = 'lc-x'; x.textContent = '×'; x.title = 'delete loop';
+    x.onclick = e => { e.stopPropagation(); deleteLoop(loop.id); };
+    chip.appendChild(x);
+    chip.ondragstart = e => { drag = { from: 'tray', id: loop.id }; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', loop.name); };
+    chip.ondragend = () => { drag = null; };
+    loopTray.appendChild(chip);
+  });
+}
+
+function renderArrangement() {
+  arrTimeline.innerHTML = '';
+  if (!arrangement.length) { arrTimeline.innerHTML = '<span class="hint">drag loops here to build an arrangement</span>'; return; }
+  arrangement.forEach((id, i) => {
+    const loop = loops.find(l => l.id === id);
+    const slot = document.createElement('div'); slot.className = 'slot'; slot.draggable = true;
+    const lbl = document.createElement('span'); lbl.textContent = (i + 1) + '. ' + (loop ? loop.name : '?');
+    slot.appendChild(lbl);
+    const x = document.createElement('button'); x.className = 'lc-x'; x.textContent = '×';
+    x.onclick = e => { e.stopPropagation(); arrangement.splice(i, 1); renderArrangement(); persist(); };
+    slot.appendChild(x);
+    slot.ondragstart = e => { drag = { from: 'arr', index: i }; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'arr'); };
+    slot.ondragend = () => { drag = null; };
+    slot.ondragover = e => { e.preventDefault(); slot.classList.add('over'); };
+    slot.ondragleave = () => slot.classList.remove('over');
+    slot.ondrop = e => { e.preventDefault(); e.stopPropagation(); slot.classList.remove('over'); handleDrop(i); };
+    arrTimeline.appendChild(slot);
+  });
+}
+
+function handleDrop(targetIndex) {                      // insert/move at targetIndex
+  arrTimeline.classList.remove('over');
+  if (!drag) return;
+  if (drag.from === 'tray') {
+    arrangement.splice(targetIndex, 0, drag.id);
+  } else {
+    const from = drag.index;
+    const [moved] = arrangement.splice(from, 1);
+    arrangement.splice(from < targetIndex ? targetIndex - 1 : targetIndex, 0, moved);
+  }
+  drag = null; renderArrangement(); persist();
+}
+arrTimeline.ondragover = e => { e.preventDefault(); arrTimeline.classList.add('over'); };
+arrTimeline.ondragleave = () => arrTimeline.classList.remove('over');
+arrTimeline.ondrop = e => { e.preventDefault(); handleDrop(arrangement.length); };   // drop on empty space = append
+
+function highlightArrSlot(slot) {
+  document.querySelectorAll('.slot.playing').forEach(s => s.classList.remove('playing'));
+  arrTimeline.children[slot]?.classList.add('playing');
+}
+function clearArrHighlight() {
+  document.querySelectorAll('.slot.playing').forEach(s => s.classList.remove('playing'));
+}
+
+playArrBtn.onclick = () => {
+  ensureAudio();
+  if (ctx.state === 'suspended') ctx.resume();
+  if (seq.playing && mode === 'arrange') { stopPlayback(); return; }
+  if (!arrangement.length) return;
+  stopPlayback();
+  mode = 'arrange'; arrIndex = 0; currentArrLoop = null; arrQueue.length = 0;
+  seq.start();
+  playArrBtn.textContent = '■ Stop'; playArrBtn.classList.add('on');
+};
+clearArrBtn.onclick = () => { arrangement = []; if (mode === 'arrange') stopPlayback(); renderArrangement(); persist(); };
+
+(() => {                                                // restore saved loops/arrangement
+  try {
+    const s = JSON.parse(localStorage.getItem('thudworks:loops') || 'null');
+    if (s && Array.isArray(s.loops)) {
+      loops = s.loops; arrangement = s.arrangement || [];
+      nextLoopId = s.nextLoopId || (loops.reduce((m, l) => Math.max(m, l.id), 0) + 1);
+    }
+  } catch {}
+})();
+renderTray(); renderArrangement();
 
 buildGrid();
 PRESETS['Boom Bap'] && (() => {     // start with a beat already on the grid
